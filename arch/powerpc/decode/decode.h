@@ -1486,7 +1486,6 @@ extern "C" {
 		PPC_ID_SPE_EFSTSTEQ,
 		PPC_ID_SPE_EFSTSTGT,
 		PPC_ID_SPE_EFSTSTLT,
-		PPC_ID_SPE_EFSMADD,
 		PPC_ID_SPE_EVABS,
 		PPC_ID_SPE_EVADDIW,
 		PPC_ID_SPE_EVADDSMIAAW,
@@ -1687,6 +1686,7 @@ extern "C" {
 		PPC_ID_SPE_EVSUBFW,
 		PPC_ID_SPE_EVSUBIFW,
 		PPC_ID_SPE_EVXOR,
+		PPC_ID_SPE_EFSMADD,
 
 		// This should be all of the VLE instructions; if any get added
 		// here, make sure `vle32.c:IsVleInstructionId` remains valid
