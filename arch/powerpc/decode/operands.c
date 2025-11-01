@@ -2670,6 +2670,7 @@ void FillOperands32(Instruction* instruction, uint32_t word32, uint64_t address)
 		case PPC_ID_SPE_EFDMUL:
 		case PPC_ID_SPE_EFDSUB:
 		case PPC_ID_SPE_EFSADD:
+		case PPC_ID_SPE_EFSMADD:
 		case PPC_ID_SPE_EFSDIV:
 		case PPC_ID_SPE_EFSMUL:
 		case PPC_ID_SPE_EFSSUB:
