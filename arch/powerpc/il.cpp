@@ -2399,7 +2399,7 @@ bool GetLowLevelILForPPCInstruction(Architecture *arch, LowLevelILFunction &il,
 		case PPC_ID_SPE_EFSTSTLT:
 		case PPC_ID_SPE_EFSTSTEQ:
 			REQUIRE3OPS
-			ei0 = il.FloatSub(4, operToIL(il, oper1), operToIL(il, oper2), crxToFlagWriteType(oper0->reg, PPC_SUF_S));
+			ei0 = il.FloatSub(4, operToIL(il, oper1), operToIL(il, oper2), crxToFlagWriteType(oper0->reg, PPC_SUF_F));
 			il.AddInstruction(ei0);
 			break;
 		
