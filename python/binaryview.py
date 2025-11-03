@@ -504,7 +504,7 @@ class StringReference:
 
 	@property
 	def value(self) -> str:
-		return self._view.read(self._start, self._length).decode(self._decodings[self._type])
+		return self._view.read(self._start, self._length).decode(self._decodings[self._type], errors='replace')
 
 	@property
 	def raw(self) -> bytes:
@@ -9626,7 +9626,7 @@ to a the type "tagRECT" found in the typelibrary "winX64common"
 		limit: int = None, progress_callback: Optional[ProgressFuncType] = None, match_callback: Optional[DataMatchCallbackType] = None) -> QueueGenerator:
 		r"""
 		Searches for matches of the specified ``pattern`` within this BinaryView with an optionally provided address range specified by ``start`` and ``end``.
-		The search pattern can be interpreted in various ways:
+		This is the API used by the advanced binary search UI option. The search pattern can be interpreted in various ways:
 
 			- specified as a string of hexadecimal digits where whitespace is ignored, and the '?' character acts as a wildcard
 			- a regular expression suitable for working with bytes
