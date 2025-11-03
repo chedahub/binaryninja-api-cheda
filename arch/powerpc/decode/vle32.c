@@ -386,11 +386,7 @@ static void FillOperands32Vle(Instruction* instruction, uint32_t word32, uint64_
 		case PPC_ID_VLE_E_LIS:
 		{
 			uint32_t ui = (ui0_4 << 11) | ui5_15;
-
-			PushRA(instruction, word32);
-			if (translate)
-				PushRS(instruction, word32);
-
+			PushRD(instruction, word32);
 			PushUIMMValue(instruction, ui);
 			if ((instruction->id == PPC_ID_VLE_E_AND2I) || (instruction->id == PPC_ID_VLE_E_AND2IS))
 				instruction->flags.rc = true;
