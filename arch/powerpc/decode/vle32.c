@@ -392,11 +392,6 @@ static void FillOperands32Vle(Instruction* instruction, uint32_t word32, uint64_
 				instruction->flags.rc = true;
 			break;
 		}
-		case PPC_ID_VLE_E_LIS:
-			uint32_t ui = (ui0_4 << 11) | ui5_15;
-			PushRD(instruction, word32);
-			PushUIMMValue(instruction, ui);
-			break;
 
 		// <op>[.] rA, rS, SH
 		case PPC_ID_VLE_E_RLWIx:
