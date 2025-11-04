@@ -1214,6 +1214,7 @@ bool GetLowLevelILForPPCInstruction(Architecture *arch, LowLevelILFunction &il,
 		case PPC_ID_VLE_SE_NOT:
 			ei0 = il.Not(addressSize_l, operToIL_a(il, oper0, addressSize_l));
 			ei0 = il.SetRegister(addressSize_l, oper0->reg, ei0);
+			il.AddInstruction(ei0);
 			break;
 
 		case PPC_ID_ORIx:
