@@ -12352,6 +12352,11 @@ namespace BinaryNinja {
 		*/
 		Ref<Symbol> GetSymbol() const;
 
+		/*!
+			\return Whether the function's symbol is globally or weakly bound (treated as exported)
+		*/
+		bool IsExported() const;
+
 		/*! Whether this function was automatically discovered by analysis
 
 			\return Whether the function was automatically discovered
@@ -18439,10 +18444,10 @@ namespace BinaryNinja {
 	/*!
 		\ingroup pluginmanager
 	*/
-	class RepoPlugin : public CoreRefCountObject<BNPlugin, BNNewPluginReference, BNFreePlugin>
+	class RepoPlugin : public CoreRefCountObject<BNRepoPlugin, BNNewPluginReference, BNFreePlugin>
 	{
 	  public:
-		RepoPlugin(BNPlugin* plugin);
+		RepoPlugin(BNRepoPlugin* plugin);
 		PluginStatus GetPluginStatus() const;
 		std::vector<std::string> GetApis() const;
 		std::vector<std::string> GetInstallPlatforms() const;
@@ -18507,13 +18512,17 @@ namespace BinaryNinja {
 	/*!
 		\ingroup pluginmanager
 	*/
-	class RepositoryManager
+	class RepositoryManager :
+	    public CoreRefCountObject<BNRepositoryManager, BNNewRepositoryManagerReference, BNFreeRepositoryManager>
 	{
 	  public:
-		static bool CheckForUpdates();
-		static std::vector<Ref<Repository>> GetRepositories();
-		static Ref<Repository> GetRepositoryByPath(const std::string& repoName);
-		static bool AddRepository(const std::string& url,  // URL to raw plugins.json file
+		RepositoryManager(const std::string& enabledPluginsPath);
+		RepositoryManager(BNRepositoryManager* repoManager);
+		RepositoryManager();
+		bool CheckForUpdates();
+		std::vector<Ref<Repository>> GetRepositories();
+		Ref<Repository> GetRepositoryByPath(const std::string& repoName);
+		bool AddRepository(const std::string& url,  // URL to raw plugins.json file
 		    const std::string& repoPath);           // Relative path within the repositories directory
 		Ref<Repository> GetDefaultRepository();
 	};
