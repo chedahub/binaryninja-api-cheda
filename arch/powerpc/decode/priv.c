@@ -201,7 +201,8 @@ InstructionId VleTranslateMnemonic(InstructionId id)
 		case PPC_ID_VLE_SE_MULLW: return PPC_ID_MULLWx;
 		case PPC_ID_VLE_SE_NEG: return PPC_ID_NEGx;
 		case PPC_ID_VLE_SE_NOP: return PPC_ID_NOP;
-		case PPC_ID_VLE_SE_NOT: return PPC_ID_NORx;
+		//case PPC_ID_VLE_SE_NOT: return PPC_ID_NORx;
+		case PPC_ID_VLE_SE_NOT: return id;
 		case PPC_ID_VLE_SE_OR: return PPC_ID_ORx;
 		case PPC_ID_VLE_SE_RFCI: return PPC_ID_RFCI;
 		case PPC_ID_VLE_SE_RFDI: return PPC_ID_RFDI;
