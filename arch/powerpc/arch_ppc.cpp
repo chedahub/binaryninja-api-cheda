@@ -2676,7 +2676,7 @@ extern "C"
 		Architecture* ppc = new PowerpcArchitecture("ppc", BigEndian);
 		Architecture::Register(ppc);
 
-		Architecture* ppcvle = new PowerpcArchitecture("ppcvle", BigEndian, 4, DECODE_FLAGS_VLE);
+		Architecture* ppcvle = new PowerpcArchitecture("ppcvle", BigEndian, 4, DECODE_FLAGS_VLE | DECODE_FLAGS_SPE);
 		Architecture::Register(ppcvle);
 
 		Architecture* ppc_qpx = new PowerpcArchitecture("ppc_qpx", BigEndian, 4, DECODE_FLAGS_QPX);

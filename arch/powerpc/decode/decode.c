@@ -1378,6 +1378,9 @@ static InstructionId DecodeSpe0x04(uint32_t word32, uint32_t decodeFlags)
 
 		case 705:
 			return PPC_ID_SPE_EFSSUB;
+		
+		case 706:
+		    return PPC_ID_SPE_EFSMADD;
 
 		case 708:
 			if (b != 0)

@@ -1211,6 +1211,12 @@ bool GetLowLevelILForPPCInstruction(Architecture *arch, LowLevelILFunction &il,
 			il.AddInstruction(ei0);
 			break;
 
+		case PPC_ID_VLE_SE_NOT:
+			ei0 = il.Not(addressSize_l, operToIL_a(il, oper0, addressSize_l));
+			ei0 = il.SetRegister(addressSize_l, oper0->reg, ei0);
+			il.AddInstruction(ei0);
+			break;
+
 		case PPC_ID_ORIx:
 		case PPC_ID_ORIS:
 			REQUIRE3OPS
@@ -1994,10 +2000,14 @@ bool GetLowLevelILForPPCInstruction(Architecture *arch, LowLevelILFunction &il,
 			il.AddInstruction(ei0);
 			break;
 
+		case PPC_ID_SPE_EFSADD:
 		case PPC_ID_FADDSx:
 			REQUIRE3OPS
 			ei0 = il.FloatAdd(4, operToIL(il, oper1), operToIL(il, oper2));
-			ei0 = il.SetRegister(4, oper0->reg, ei0, (instruction->flags.rc) ? IL_FLAGWRITE_CR0_F : 0);
+			if (instruction->id == PPC_ID_SPE_EFSADD)
+			    ei0 = il.SetRegister(4, oper0->reg, ei0);
+			else
+				ei0 = il.SetRegister(4, oper0->reg, ei0, (instruction->flags.rc) ? IL_FLAGWRITE_CR0_F : 0);
 			il.AddInstruction(ei0);
 			break;
 
@@ -2009,10 +2019,14 @@ bool GetLowLevelILForPPCInstruction(Architecture *arch, LowLevelILFunction &il,
 			il.AddInstruction(ei0);
 			break;
 
+		case PPC_ID_SPE_EFSSUB:
 		case PPC_ID_FSUBSx:
 			REQUIRE3OPS
 			ei0 = il.FloatSub(4, operToIL(il, oper1), operToIL(il, oper2));
-			ei0 = il.SetRegister(4, oper0->reg, ei0, (instruction->flags.rc) ? IL_FLAGWRITE_CR0_F : 0);
+			if (instruction->id == PPC_ID_SPE_EFSSUB)
+				ei0 = il.SetRegister(4, oper0->reg, ei0);
+			else
+				ei0 = il.SetRegister(4, oper0->reg, ei0, (instruction->flags.rc) ? IL_FLAGWRITE_CR0_F : 0);
 			il.AddInstruction(ei0);
 			break;
 
@@ -2117,10 +2131,14 @@ bool GetLowLevelILForPPCInstruction(Architecture *arch, LowLevelILFunction &il,
 			il.AddInstruction(ei1);
 			break;
 
+		case PPC_ID_SPE_EFSMUL:
 		case PPC_ID_FMULSx:
 			REQUIRE3OPS
 			ei0 = il.FloatMult(4, operToIL(il, oper1), operToIL(il, oper2));
-			ei1 = il.SetRegister(4, oper0->reg, ei0, (instruction->flags.rc) ? IL_FLAGWRITE_CR0_F : 0);
+			if (instruction->id == PPC_ID_SPE_EFSMUL)
+				ei1 = il.SetRegister(4, oper0->reg, ei0);
+			else
+				ei1 = il.SetRegister(4, oper0->reg, ei0, (instruction->flags.rc) ? IL_FLAGWRITE_CR0_F : 0);
 			il.AddInstruction(ei1);
 			break;
 
@@ -2132,10 +2150,14 @@ bool GetLowLevelILForPPCInstruction(Architecture *arch, LowLevelILFunction &il,
 			il.AddInstruction(ei1);
 			break;
 
+		case PPC_ID_SPE_EFSDIV:
 		case PPC_ID_FDIVSx:
 			REQUIRE3OPS
 			ei0 = il.FloatDiv(4, operToIL(il, oper1), operToIL(il, oper2));
-			ei1 = il.SetRegister(4, oper0->reg, ei0, (instruction->flags.rc) ? IL_FLAGWRITE_CR0_F : 0);
+			if (instruction->id == PPC_ID_SPE_EFSDIV)
+				ei1 = il.SetRegister(4, oper0->reg, ei0);
+			else
+				ei1 = il.SetRegister(4, oper0->reg, ei0, (instruction->flags.rc) ? IL_FLAGWRITE_CR0_F : 0);
 			il.AddInstruction(ei1);
 			break;
 
@@ -2186,10 +2208,14 @@ bool GetLowLevelILForPPCInstruction(Architecture *arch, LowLevelILFunction &il,
 			il.AddInstruction(ei0);
 			break;
 
+		case PPC_ID_SPE_EFSNEG:
 		case PPC_ID_FNEGx:
 			REQUIRE2OPS
 			ei0 = il.FloatNeg(4, operToIL(il, oper1));
-			ei0 = il.SetRegister(4, oper0->reg, ei0, (instruction->flags.rc) ? IL_FLAGWRITE_CR0_F : 0);
+			if (instruction->id == PPC_ID_SPE_EFSNEG)
+				ei0 = il.SetRegister(4, oper0->reg, ei0);
+			else
+				ei0 = il.SetRegister(4, oper0->reg, ei0, (instruction->flags.rc) ? IL_FLAGWRITE_CR0_F : 0);
 			il.AddInstruction(ei0);
 			break;
 
@@ -2231,18 +2257,26 @@ bool GetLowLevelILForPPCInstruction(Architecture *arch, LowLevelILFunction &il,
 			il.AddInstruction(ei1);
 			break;
 
+		case PPC_ID_SPE_EFSABS:
 		case PPC_ID_FABSx:
 			REQUIRE2OPS
 			ei0 = il.FloatAbs(4, operToIL(il, oper1));
-			ei1 = il.SetRegister(4, oper0->reg, ei0, (instruction->flags.rc) ? IL_FLAGWRITE_CR0_F : 0);
+			if (instruction->id == PPC_ID_SPE_EFSABS)
+				ei1 = il.SetRegister(4, oper0->reg, ei0);
+			else
+				ei1 = il.SetRegister(4, oper0->reg, ei0, (instruction->flags.rc) ? IL_FLAGWRITE_CR0_F : 0);
 			il.AddInstruction(ei1);
 			break;
 
+		case PPC_ID_SPE_EFSNABS:
 		case PPC_ID_FNABSx:
 			REQUIRE2OPS
 			ei0 = il.FloatAbs(4, operToIL(il, oper1));
 			ei0 = il.FloatNeg(4, ei0);
-			ei1 = il.SetRegister(4, oper0->reg, ei0, (instruction->flags.rc) ? IL_FLAGWRITE_CR0_F : 0);
+			if (instruction->id == PPC_ID_SPE_EFSNABS)
+				ei1 = il.SetRegister(4, oper0->reg, ei0);
+			else
+				ei1 = il.SetRegister(4, oper0->reg, ei0, (instruction->flags.rc) ? IL_FLAGWRITE_CR0_F : 0);
 			il.AddInstruction(ei1);
 			break;
 
@@ -2342,6 +2376,46 @@ bool GetLowLevelILForPPCInstruction(Architecture *arch, LowLevelILFunction &il,
 				PPC_INTRIN_FRSP,
 				{operToIL(il, oper1)});
 			il.AddInstruction(ei0);
+			break;
+		
+		case PPC_ID_VLE_SE_BTSTI:
+		    REQUIRE2OPS
+			ei0 = il.TestBit(addressSize_l,
+				operToIL_a(il, oper0, addressSize_l),
+				operToIL_a(il, oper1, addressSize_l));
+			il.AddInstruction(ei0);
+			break;
+		
+		case PPC_ID_SPE_EFSCFSI:
+		case PPC_ID_SPE_EFSCFUI:
+			REQUIRE2OPS
+			ei0 = il.FloatConvert(4, operToIL(il, oper1));
+			ei1 = il.SetRegister(4, oper0->reg, ei0);
+			il.AddInstruction(ei1);
+			break;
+		
+		case PPC_ID_SPE_EFSCTSIZ:
+		case PPC_ID_SPE_EFSCTUIZ:
+			REQUIRE2OPS
+			ei0 = il.FloatToInt(4, operToIL(il, oper1));
+			ei1 = il.SetRegister(4, oper0->reg, ei0);
+			il.AddInstruction(ei1);
+			break;
+		
+		case PPC_ID_SPE_EFSTSTGT:
+		case PPC_ID_SPE_EFSTSTLT:
+		case PPC_ID_SPE_EFSTSTEQ:
+			REQUIRE3OPS
+			ei0 = il.FloatSub(4, operToIL(il, oper1), operToIL(il, oper2), crxToFlagWriteType(oper0->reg, PPC_SUF_F));
+			il.AddInstruction(ei0);
+			break;
+		
+		case PPC_ID_SPE_EFSMADD:
+			REQUIRE3OPS
+			ei0 = il.FloatMult(4, operToIL(il, oper1), operToIL(il, oper2));
+			ei0 = il.FloatAdd(4, ei0, operToIL(il, oper0));
+			ei1 = il.SetRegister(4, oper0->reg, ei0);
+			il.AddInstruction(ei1);
 			break;
 
 		ReturnUnimpl:

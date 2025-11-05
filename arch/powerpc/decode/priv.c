@@ -201,7 +201,8 @@ InstructionId VleTranslateMnemonic(InstructionId id)
 		case PPC_ID_VLE_SE_MULLW: return PPC_ID_MULLWx;
 		case PPC_ID_VLE_SE_NEG: return PPC_ID_NEGx;
 		case PPC_ID_VLE_SE_NOP: return PPC_ID_NOP;
-		case PPC_ID_VLE_SE_NOT: return PPC_ID_NORx;
+		//case PPC_ID_VLE_SE_NOT: return PPC_ID_NORx;
+		case PPC_ID_VLE_SE_NOT: return id;
 		case PPC_ID_VLE_SE_OR: return PPC_ID_ORx;
 		case PPC_ID_VLE_SE_RFCI: return PPC_ID_RFCI;
 		case PPC_ID_VLE_SE_RFDI: return PPC_ID_RFDI;
@@ -244,6 +245,23 @@ InstructionId VleTranslateMnemonic(InstructionId id)
 		case PPC_ID_VLE_SE_STH: // VLE treats rA=0 as valid base
 		case PPC_ID_VLE_SE_STW: // VLE treats rA=0 as valid base
 			return id;
+		
+		case PPC_ID_SPE_EFSADD:
+		case PPC_ID_SPE_EFSSUB:
+		case PPC_ID_SPE_EFSMUL:
+		case PPC_ID_SPE_EFSDIV:
+		case PPC_ID_SPE_EFSABS:
+		case PPC_ID_SPE_EFSNABS:
+		case PPC_ID_SPE_EFSNEG:
+		case PPC_ID_SPE_EFSCFSI:
+		case PPC_ID_SPE_EFSCFUI:
+		case PPC_ID_SPE_EFSCTSIZ:
+ 		case PPC_ID_SPE_EFSCTUIZ:
+		case PPC_ID_SPE_EFSTSTGT:
+        case PPC_ID_SPE_EFSTSTLT:
+        case PPC_ID_SPE_EFSTSTEQ:
+		case PPC_ID_SPE_EFSMADD:
+		    return id;
 
 		default:
 			return id;
