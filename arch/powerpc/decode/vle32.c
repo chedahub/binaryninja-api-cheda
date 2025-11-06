@@ -369,7 +369,7 @@ static void FillOperands32Vle(Instruction* instruction, uint32_t word32, uint64_
 		case PPC_ID_VLE_E_ADD2I:
 		case PPC_ID_VLE_E_ADD2IS:
 		case PPC_ID_VLE_E_MULL2I:
-			PushRD(instruction, word32);
+			PushRA(instruction, word32);
 			if (translate)
 				PushRA(instruction, word32);
 
