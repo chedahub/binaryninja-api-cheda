@@ -316,10 +316,10 @@ static bool LiftBranches(Architecture* arch, LowLevelILFunction &il, const Instr
 					il.AddInstruction(il.Jump(il.ConstPointer(addressSize_l, target)));
 			}
 
-			if (wasConditionalBranch && !existingFalseLabel)
-			{
-				il.MarkLabel(*falseLabel);
-			}
+			//if (wasConditionalBranch && !existingFalseLabel)
+			//{
+			//	il.MarkLabel(*falseLabel);
+			//}
 
 			break;
 		}
