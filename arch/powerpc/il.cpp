@@ -300,7 +300,8 @@ static bool LiftBranches(Architecture* arch, LowLevelILFunction &il, const Instr
 			{
 				il.AddInstruction(il.Goto(*takenLabel));
 			}
-			else if (target != addr + instruction->numBytes)
+			//else if (target != addr + instruction->numBytes)
+			else if (!(wasConditionalBranch && existingTakenLabel) && target != addr + instruction->numBytes)
 			{
 				if (instruction->flags.lk)
 				{
