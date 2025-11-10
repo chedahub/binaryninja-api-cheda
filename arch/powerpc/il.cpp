@@ -316,11 +316,20 @@ static bool LiftBranches(Architecture* arch, LowLevelILFunction &il, const Instr
 					il.AddInstruction(il.Jump(il.ConstPointer(addressSize_l, target)));
 			}
 
+			//if (wasConditionalBranch && !existingFalseLabel)
+			//{
+			//	il.MarkLabel(*falseLabel);
+			//}
 			if (wasConditionalBranch && !existingFalseLabel)
 			{
 				il.MarkLabel(*falseLabel);
+				uint64_t fallThroughAddr = addr + instruction->numBytes;
+				BNLowLevelILLabel* fallThroughLabel = il.GetLabelForAddress(arch, fallThroughAddr);
+				if (fallThroughLabel)
+					il.AddInstruction(il.Goto(*fallThroughLabel));
+				else
+					il.AddInstruction(il.Jump(il.ConstPointer(addressSize_l, fallThroughAddr)));   
 			}
-
 			break;
 		}
 		case PPC_ID_BCCTRx: /* bcctr, bclr */
