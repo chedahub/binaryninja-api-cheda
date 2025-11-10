@@ -190,8 +190,8 @@ static bool LiftConditionalBranch(LowLevelILFunction& il, uint8_t bo, uint8_t bi
 
 	if (testsCrBit)
 	{
-		//ExprId cond = ExtractConditionClause(il, bi, !(bo & 8));
-		ExprId cond = ExtractConditionClause(il, bi, (bo & 8));
+		ExprId cond = ExtractConditionClause(il, bi, !(bo & 8));
+		//ExprId cond = ExtractConditionClause(il, bi, (bo & 8));
 		il.AddInstruction(il.If(cond, takenLabel, falseLabel));
 	}
 
