@@ -191,7 +191,6 @@ static bool LiftConditionalBranch(LowLevelILFunction& il, uint8_t bo, uint8_t bi
 	if (testsCrBit)
 	{
 		ExprId cond = ExtractConditionClause(il, bi, !(bo & 8));
-		//ExprId cond = ExtractConditionClause(il, bi, (bo & 8));
 		il.AddInstruction(il.If(cond, takenLabel, falseLabel));
 	}
 
@@ -618,7 +617,7 @@ bool GetLowLevelILForPPCInstruction(Architecture *arch, LowLevelILFunction &il,
 
 		case PPC_ID_ADDIx: /* add immediate, eg: addi rD, rA, <imm> */
 		case PPC_ID_ADDIS: /* add immediate, shifted */
-			REQUIRE2OPS
+			REQUIRE3OPS
 			if (instruction->id == PPC_ID_ADDIS)
 				ei0 = il.Const(addressSize_l, oper2->simm << 16);
 			else
@@ -628,7 +627,8 @@ bool GetLowLevelILForPPCInstruction(Architecture *arch, LowLevelILFunction &il,
 				operToIL(il, oper1),
 				ei0
 			);
-			ei0 = il.SetRegister(addressSize_l, oper0->reg, ei0);
+			ei0 = il.SetRegister(addressSize_l, oper0->reg, ei0,
+				instruction->flags.rc ? IL_FLAGWRITE_CR0_S : 0);
 			il.AddInstruction(ei0);
 			break;
 
