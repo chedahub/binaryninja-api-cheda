@@ -273,7 +273,9 @@ static bool LiftBranches(Architecture* arch, LowLevelILFunction &il, const Instr
 			}
 
 			BNLowLevelILLabel *existingTakenLabel = il.GetLabelForAddress(arch, target);
-			BNLowLevelILLabel *existingFalseLabel = il.GetLabelForAddress(arch, addr + instruction->numBytes);
+			//BNLowLevelILLabel *existingFalseLabel = il.GetLabelForAddress(arch, addr + instruction->numBytes);
+			uint64_t fallThroughAddr = addr + (instruction->numBytes == 0 ? 2 : instruction->numBytes);
+			BNLowLevelILLabel *existingFalseLabel = il.GetLabelForAddress(arch, fallThroughAddr);
 
 			if (instruction->flags.lk)
 			{
@@ -323,11 +325,7 @@ static bool LiftBranches(Architecture* arch, LowLevelILFunction &il, const Instr
 			if (wasConditionalBranch && !existingFalseLabel)
 			{
 				il.MarkLabel(*falseLabel);
-				uint64_t fallThroughAddr;
-				if (instruction->numBytes == 0)
-					fallThroughAddr = addr + 2;
-				else
-					fallThroughAddr = addr + instruction->numBytes;
+				uint64_t fallThroughAddr = addr + (instruction->numBytes == 0 ? 2 : instruction->numBytes);
 
 				BNLowLevelILLabel* fallThroughLabel = il.GetLabelForAddress(arch, fallThroughAddr);
 				if (fallThroughLabel)
