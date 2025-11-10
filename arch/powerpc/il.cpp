@@ -553,7 +553,7 @@ bool GetLowLevelILForPPCInstruction(Architecture *arch, LowLevelILFunction &il,
 		/* add
 			"add." also updates the CR0 bits */
 		case PPC_ID_ADDx: /* add */
-			REQUIRE2OPS
+			REQUIRE3OPS
 			ei0 = il.Add(
 				addressSize_l,
 				operToIL_a(il, oper1, addressSize_l),
@@ -671,9 +671,6 @@ bool GetLowLevelILForPPCInstruction(Architecture *arch, LowLevelILFunction &il,
 			else
 				ei0 = il.Const(addressSize_l, oper2->uimm);
 			ei0 = il.And(addressSize_l, operToIL(il, oper1), ei0);
-
-			// VLE instructions that get translated to ANDIx may
-			// not have the rc bit set
 			ei0 = il.SetRegister(addressSize_l, oper0->reg, ei0,
 				instruction->flags.rc ? IL_FLAGWRITE_CR0_S : 0
 			);
@@ -713,7 +710,7 @@ bool GetLowLevelILForPPCInstruction(Architecture *arch, LowLevelILFunction &il,
 			break;
 
 		case PPC_ID_CMPD: /* compare (signed) d-word(64-bit) */
-			REQUIRE2OPS
+			REQUIRE3OPS
 			ei0 = operToIL_a(il, oper1, 8);
 			ei1 = operToIL_a(il, oper2, 8);
 			ei2 = il.Sub(addressSize_l, ei0, ei1, crxToFlagWriteType(oper0->reg, PPC_SUF_S));
@@ -721,7 +718,7 @@ bool GetLowLevelILForPPCInstruction(Architecture *arch, LowLevelILFunction &il,
 			break;
 
 		case PPC_ID_CMPLD: /* compare logical(unsigned) d-word(64-bit) */
-			REQUIRE2OPS
+			REQUIRE3OPS
 			ei0 = operToIL_a(il, oper1, 8);
 			ei1 = operToIL_a(il, oper2, 8);
 			ei2 = il.Sub(addressSize_l, ei0, ei1, crxToFlagWriteType(oper0->reg, PPC_SUF_U));
@@ -729,7 +726,7 @@ bool GetLowLevelILForPPCInstruction(Architecture *arch, LowLevelILFunction &il,
 			break;
 
 		case PPC_ID_CMPDI:
-			REQUIRE2OPS
+			REQUIRE3OPS
 			ei0 = operToIL_a(il, oper1, 8);
 			ei1 = operToIL_a(il, oper2, 8);
 			ei2 = il.Sub(8, ei0, ei1, crxToFlagWriteType(oper0->reg, PPC_SUF_S));
@@ -737,7 +734,7 @@ bool GetLowLevelILForPPCInstruction(Architecture *arch, LowLevelILFunction &il,
 			break;
 
 		case PPC_ID_CMPLDI:
-			REQUIRE2OPS
+			REQUIRE3OPS
 			ei0 = operToIL_a(il, oper1, 8);
 			ei1 = operToIL_a(il, oper2, 8);
 			ei2 = il.Sub(8, ei0, ei1, crxToFlagWriteType(oper0->reg, PPC_SUF_U));
