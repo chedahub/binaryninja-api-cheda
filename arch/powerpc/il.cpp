@@ -323,7 +323,12 @@ static bool LiftBranches(Architecture* arch, LowLevelILFunction &il, const Instr
 			if (wasConditionalBranch && !existingFalseLabel)
 			{
 				il.MarkLabel(*falseLabel);
-				uint64_t fallThroughAddr = addr + instruction->numBytes;
+				uint64_t fallThroughAddr;
+				if (instruction->numBytes == 0)
+					fallThroughAddr = addr + 2;
+				else
+					fallThroughAddr = addr + instruction->numBytes;
+
 				BNLowLevelILLabel* fallThroughLabel = il.GetLabelForAddress(arch, fallThroughAddr);
 				if (fallThroughLabel)
 					il.AddInstruction(il.Goto(*fallThroughLabel));
