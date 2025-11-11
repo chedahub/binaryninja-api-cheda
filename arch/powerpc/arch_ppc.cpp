@@ -829,22 +829,22 @@ class PowerpcArchitecture: public Architecture
 		}
 
 		// **** HERE 22
-		auto liftOps = [&]() {
-			if ((op == LLIL_SUB) || (op == LLIL_FSUB))
-			{
-				left = il.GetExprForRegisterOrConstant(operands[0], size);
-				right = il.GetExprForRegisterOrConstant(operands[1], size);
-			}
-			else
-			{
-				left = il.GetExprForRegisterOrConstantOperation(op, size, operands, operandCount);
-				right = il.Const(size, 0);
-			}
-		};
 		//auto liftOps = [&]() {
-		//	left = il.GetExprForRegisterOrConstantOperation(op, size, operands, operandCount);
-		//	right = il.Const(size, 0);
+		//	if ((op == LLIL_SUB) || (op == LLIL_FSUB))
+		//	{
+		//		left = il.GetExprForRegisterOrConstant(operands[0], size);
+		//		right = il.GetExprForRegisterOrConstant(operands[1], size);
+		//	}
+		//	else
+		//	{
+		//		left = il.GetExprForRegisterOrConstantOperation(op, size, operands, operandCount);
+		//		right = il.Const(size, 0);
+		//	}
 		//};
+		auto liftOps = [&]() {
+			left = il.GetExprForRegisterOrConstantOperation(op, size, operands, operandCount);
+			right = il.Const(size, 0);
+		};
 
 		switch (flag)
 		{
