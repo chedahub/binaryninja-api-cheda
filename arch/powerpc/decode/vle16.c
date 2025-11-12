@@ -339,10 +339,22 @@ static uint16_t Get16Rx(uint16_t word16)
 	return rx + ((rx & 0x8) >> 3) * 16;
 }
 
+static uint16_t Get16Arx(uint16_t word16)
+{
+	uint16_t rx = word16 & 0xf;
+	return rx + 8;
+}
+
 static uint16_t Get16Ry(uint16_t word16)
 {
 	uint16_t ry = (word16 >> 4) & 0xf;
 	return ry + ((ry & 0x8) >> 3) * 16;
+}
+
+static uint16_t Get16Ary(uint16_t word16)
+{
+	uint16_t ry = (word16 >> 4) & 0xf;
+	return ry + 8;
 }
 
 static uint16_t Get16Rz(uint16_t word16)
@@ -725,14 +737,20 @@ static void FillOperands16Vle(Instruction* instruction, uint16_t word16, uint64_
 		}
 
 		case PPC_ID_VLE_SE_MFAR:
+		{
+			uint16_t ary = Get16Ary(word16);
 			PushRegister(instruction, PPC_OP_REG_RA, Gpr(rx));
-			PushRegister(instruction, PPC_OP_REG_RS, Gpr(8 + ry));
+			PushRegister(instruction, PPC_OP_REG_RS, Gpr(ary));  // [TODO PR: RR-form decoding]
 			break;
+		}
 
 		case PPC_ID_VLE_SE_MTAR:
-			PushRegister(instruction, PPC_OP_REG_RA, Gpr(8 + rx));
+		{
+    		uint16_t arx = Get16Arx(word16);
+			PushRegister(instruction, PPC_OP_REG_RA, Gpr(arx));
 			PushRegister(instruction, PPC_OP_REG_RS, Gpr(ry));
 			break;
+		}
 
 		// NOTE: STB, STH, and STW in VLE don't turn rX=0 into 0
 		case PPC_ID_VLE_SE_STB:
