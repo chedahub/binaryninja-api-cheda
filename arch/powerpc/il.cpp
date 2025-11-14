@@ -190,7 +190,11 @@ static bool LiftConditionalBranch(LowLevelILFunction& il, uint8_t bo, uint8_t bi
 
 	if (testsCrBit)
 	{
-		ExprId cond = ExtractConditionClause(il, bi, !(bo & 8));
+		//ExprId cond = ExtractConditionClause(il, bi, !(bo & 8));
+		// BO field uses big-endian bit numbering (PowerPC convention)
+		// BO[3] (condition true/false) = little-endian bit 1, not bit 3
+		// bit 3 would test BO[1] (CTR test control) which is incorrect
+		ExprId cond = ExtractConditionClause(il, bi, !(bo & 2));
 		il.AddInstruction(il.If(cond, takenLabel, falseLabel));
 	}
 
