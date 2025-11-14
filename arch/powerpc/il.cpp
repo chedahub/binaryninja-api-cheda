@@ -240,31 +240,12 @@ static bool LiftBranches(Architecture* arch, LowLevelILFunction &il, const Instr
 			uint8_t bi = instruction->operands[1].uimm;
 			uint64_t target = instruction->operands[2].label;
 
-			if (instruction->id == PPC_ID_VLE_E_BCx)
-			{
-				// Table 2-5. BO32 Field Encodings in VLEPEM,
-				// mapped to their equivalent BO fields for
-				// normal BC instructions
-				//
-				// 0b00 -> branch if condition false    | 0b00100
-				// 0b01 -> branch if condition true     | 0b01100
-				// 0b10 -> dec CTR, branch if CTR != 0  | 0b10000
-				// 0b11 -> dec CTR, branch if CTR == 0  | 0b10010
-				switch (bo)
-				{
-					case 0: bo = 0x04; break;
-					case 1: bo = 0x0c; break;
-					case 2: bo = 0x10; break;
-					case 3: bo = 0x12; break;
-					default:
-						; // unreachable
-				}
-			}
-			// Note: VLE_SE_BC translation is already done in vle16.c when
-			// DECODE_FLAGS_VLE_TRANSLATE is set (arch_ppc.cpp:788).
-			// The BO value is already translated to 0x04 or 0x0c, so no
-			// additional translation is needed here. Double-translation
-			// would cause incorrect branch conditions (reversed logic).
+			// Note: Both VLE_E_BCx and VLE_SE_BC translation are already done
+			// in vle32.c and vle16.c respectively when DECODE_FLAGS_VLE_TRANSLATE
+			// is set (which is always true for IL lifting, see arch_ppc.cpp:788).
+			// The BO value is already translated (0x04/0x0c/0x10/0x12), so no
+			// additional translation is needed here. Double-translation would
+			// cause incorrect branch conditions (reversed logic).
 
 			BNLowLevelILLabel *existingTakenLabel = il.GetLabelForAddress(arch, target);
 			//BNLowLevelILLabel *existingFalseLabel = il.GetLabelForAddress(arch, addr + instruction->numBytes);
