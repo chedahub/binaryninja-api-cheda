@@ -190,11 +190,7 @@ static bool LiftConditionalBranch(LowLevelILFunction& il, uint8_t bo, uint8_t bi
 
 	if (testsCrBit)
 	{
-		//ExprId cond = ExtractConditionClause(il, bi, !(bo & 8));
-		// BO field uses big-endian bit numbering (PowerPC convention)
-		// BO[3] (condition true/false) = little-endian bit 1, not bit 3
-		// bit 3 would test BO[1] (CTR test control) which is incorrect
-		ExprId cond = ExtractConditionClause(il, bi, !(bo & 2));
+		ExprId cond = ExtractConditionClause(il, bi, !(bo & 8));
 		il.AddInstruction(il.If(cond, takenLabel, falseLabel));
 	}
 
@@ -264,16 +260,11 @@ static bool LiftBranches(Architecture* arch, LowLevelILFunction &il, const Instr
 						; // unreachable
 				}
 			}
-			else if (instruction->id == PPC_ID_VLE_SE_BC)
-			{
-				// Table 2-6. BO16 Field Encodings in VLEPEM,
-				// mapped to their equivalent BO fields for
-				// normal BC instructions
-				//
-				// 0b0 -> branch if condition false    | 0b00100
-				// 0b1 -> branch if condition true     | 0b01100
-				bo = (bo << 3) | 0x4;
-			}
+			// Note: VLE_SE_BC translation is already done in vle16.c when
+			// DECODE_FLAGS_VLE_TRANSLATE is set (arch_ppc.cpp:788).
+			// The BO value is already translated to 0x04 or 0x0c, so no
+			// additional translation is needed here. Double-translation
+			// would cause incorrect branch conditions (reversed logic).
 
 			BNLowLevelILLabel *existingTakenLabel = il.GetLabelForAddress(arch, target);
 			//BNLowLevelILLabel *existingFalseLabel = il.GetLabelForAddress(arch, addr + instruction->numBytes);
