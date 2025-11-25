@@ -5,8 +5,8 @@
 #include <vector>
 
 #include <binaryninjaapi.h>
-#define MYLOG(...) while(0);
-// #define MYLOG BinaryNinja::LogWarn
+// #define MYLOG(...) while(0);
+#define MYLOG BinaryNinja::LogWarn
 // #define MYLOG printf
 
 #include "lowlevelilinstruction.h"
@@ -372,6 +372,85 @@ class PowerpcArchitecture: public Architecture
 		}
 	}
 
+	/* Helper function to analyze and parse jump table after se_bctr instruction
+	 *
+	 * This function attempts to identify jump table data following a bctr instruction.
+	 * In PowerPC VLE, switch statements are often compiled as:
+	 *   1. Load table base address
+	 *   2. Calculate offset based on switch index
+	 *   3. Load target address into CTR
+	 *   4. Execute se_bctr
+	 *   5. Jump table data (array of 4-byte big-endian addresses) immediately follows
+	 *
+	 * Parameters:
+	 *   data: pointer to bytes after the bctr instruction
+	 *   maxLen: maximum bytes available to read
+	 *   addr: address immediately after the bctr instruction
+	 *   result: InstructionInfo to populate with jump targets
+	 *
+	 * Returns: number of bytes consumed by the jump table (0 if no table detected)
+	 */
+	size_t AnalyzeJumpTableAfterBctr(const uint8_t* data, size_t maxLen, uint64_t addr, InstructionInfo& result)
+	{
+		// Need at least 8 bytes to detect a pattern (2 entries minimum)
+		if (maxLen < 8)
+			return 0;
+
+		std::vector<uint64_t> candidates;
+		size_t offset = 0;
+
+		// Parse potential jump table entries (4-byte big-endian addresses)
+		// Continue while we see valid-looking addresses
+		while (offset + 4 <= maxLen)
+		{
+			// Read 4 bytes as big-endian
+			uint32_t entry = (data[offset] << 24) | (data[offset + 1] << 16) |
+			                 (data[offset + 2] << 8) | data[offset + 3];
+
+			// Heuristic checks to determine if this looks like a valid code address:
+			// 1. Should be non-zero
+			// 2. Should be reasonably close to current address (within ~16MB range for typical embedded systems)
+			// 3. Should be aligned to 2-byte boundary (VLE instruction alignment)
+
+			if (entry == 0)
+				break;  // Null entry likely marks end of table
+
+			// Check if address is reasonably close to current location
+			// This is a heuristic - adjust range as needed for your binaries
+			int64_t distance = (int64_t)entry - (int64_t)addr;
+			if (distance < -0x1000000 || distance > 0x1000000)  // ±16MB
+				break;
+
+			// Check 2-byte alignment for VLE
+			if ((entry & 0x1) != 0)
+				break;
+
+			candidates.push_back(entry);
+			offset += 4;
+
+			// Reasonable limit on jump table size (avoid false positives)
+			// Typical switch statements have < 256 cases
+			if (candidates.size() >= 256)
+				break;
+		}
+
+		// Need at least 2 valid entries to consider it a jump table
+		if (candidates.size() < 2)
+			return 0;
+
+		MYLOG("Detected jump table at 0x%llx with %zu entries\n", addr, candidates.size());
+
+		// Add all detected targets as indirect branch destinations
+		for (uint64_t target : candidates)
+		{
+			MYLOG("  Jump table target: 0x%llx\n", target);
+			result.AddBranch(IndirectBranch, target);
+		}
+
+		// Return size of jump table data
+		return candidates.size() * 4;
+	}
+
 	/* think "GetInstructionBranchBehavior()"
 
 	   populates struct Instruction Info (api/binaryninjaapi.h)
@@ -446,9 +525,26 @@ class PowerpcArchitecture: public Architecture
 				break;
 
 			case PPC_ID_BCCTRx:
-			case PPC_ID_VLE_SE_BCTRx:
 				if (!instruction.flags.lk && (bo & 0x14) == 0x14)
 					result.AddBranch(UnresolvedBranch);
+				break;
+
+			case PPC_ID_VLE_SE_BCTRx:
+				MYLOG("GetInstructionInfo: se_bctr at 0x%llx, lk=%d\n", addr, instruction.flags.lk);
+				if (!instruction.flags.lk)
+				{
+					if (maxLen > instructionLength)
+					{
+						size_t jumpTableSize = AnalyzeJumpTableAfterBctr(
+							data + instructionLength, maxLen - instructionLength,
+							addr + instructionLength, result);
+						MYLOG("Jump table size: %zu bytes\n", jumpTableSize);
+						if (jumpTableSize == 0)
+							result.AddBranch(UnresolvedBranch);
+					}
+					else
+						result.AddBranch(UnresolvedBranch);
+				}
 				break;
 
 			case PPC_ID_TWU:
@@ -2412,6 +2508,74 @@ public:
 	}
 };
 
+/* Jump Table Target Calling Convention
+ * 
+ * This calling convention is used for targets of jump table dispatches (switch statements).
+ * In computed goto semantics, all registers are preserved across the jump.
+ * This is different from a normal function call which may clobber argument registers.
+ * 
+ * By marking all registers as callee-saved, we tell Binary Ninja that jump table targets
+ * preserve all register state from the point of the se_bctr instruction.
+ */
+class PpcJumpTableTargetConvention: public CallingConvention
+{
+public:
+	PpcJumpTableTargetConvention(Architecture* arch): CallingConvention(arch, "jump-table-target")
+	{
+	}
+
+	// No argument registers - jump table targets are not function calls
+	virtual vector<uint32_t> GetIntegerArgumentRegisters() override
+	{
+		return vector<uint32_t>{};
+	}
+
+	virtual vector<uint32_t> GetFloatArgumentRegisters() override
+	{
+		return vector<uint32_t>{};
+	}
+
+	// Nothing is caller-saved - all registers preserved
+	virtual vector<uint32_t> GetCallerSavedRegisters() override
+	{
+		return vector<uint32_t>{};
+	}
+
+	// All GPRs are callee-saved (preserved)
+	virtual vector<uint32_t> GetCalleeSavedRegisters() override
+	{
+		return vector<uint32_t>{
+			PPC_REG_GPR0, PPC_REG_GPR1, PPC_REG_GPR2, PPC_REG_GPR3,
+			PPC_REG_GPR4, PPC_REG_GPR5, PPC_REG_GPR6, PPC_REG_GPR7,
+			PPC_REG_GPR8, PPC_REG_GPR9, PPC_REG_GPR10, PPC_REG_GPR11,
+			PPC_REG_GPR12, PPC_REG_GPR13, PPC_REG_GPR14, PPC_REG_GPR15,
+			PPC_REG_GPR16, PPC_REG_GPR17, PPC_REG_GPR18, PPC_REG_GPR19,
+			PPC_REG_GPR20, PPC_REG_GPR21, PPC_REG_GPR22, PPC_REG_GPR23,
+			PPC_REG_GPR24, PPC_REG_GPR25, PPC_REG_GPR26, PPC_REG_GPR27,
+			PPC_REG_GPR28, PPC_REG_GPR29, PPC_REG_GPR30, PPC_REG_GPR31,
+			PPC_REG_LR, PPC_REG_CTR
+		};
+	}
+
+	// No return value - these are goto targets, not functions
+	virtual uint32_t GetIntegerReturnValueRegister() override
+	{
+		return PPC_REG_INVALID;
+	}
+
+	virtual uint32_t GetFloatReturnValueRegister() override
+	{
+		return PPC_REG_INVALID;
+	}
+
+	// Not eligible for automatic detection - explicitly set by plugin
+	virtual bool IsEligibleForHeuristics() override
+	{
+		return false;
+	}
+};
+
+
 class PpcElfRelocationHandler: public RelocationHandler
 {
 public:
@@ -2725,6 +2889,16 @@ extern "C"
 		ppc_spe->RegisterCallingConvention(conv);
 		ppc_ps->RegisterCallingConvention(conv);
 		ppc64->RegisterCallingConvention(conv);
+
+	// Jump table target calling convention (for switch statement targets)
+	conv = new PpcJumpTableTargetConvention(ppc);
+	ppc->RegisterCallingConvention(conv);
+	ppcvle->RegisterCallingConvention(conv);
+	ppc_qpx->RegisterCallingConvention(conv);
+	ppc_spe->RegisterCallingConvention(conv);
+	ppc_ps->RegisterCallingConvention(conv);
+	ppc64->RegisterCallingConvention(conv);
+
 
 		conv = new PpcSvr4CallingConvention(ppc_le);
 		ppc_le->RegisterCallingConvention(conv);
