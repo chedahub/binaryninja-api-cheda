@@ -2508,74 +2508,6 @@ public:
 	}
 };
 
-/* Jump Table Target Calling Convention
- * 
- * This calling convention is used for targets of jump table dispatches (switch statements).
- * In computed goto semantics, all registers are preserved across the jump.
- * This is different from a normal function call which may clobber argument registers.
- * 
- * By marking all registers as callee-saved, we tell Binary Ninja that jump table targets
- * preserve all register state from the point of the se_bctr instruction.
- */
-class PpcJumpTableTargetConvention: public CallingConvention
-{
-public:
-	PpcJumpTableTargetConvention(Architecture* arch): CallingConvention(arch, "jump-table-target")
-	{
-	}
-
-	// No argument registers - jump table targets are not function calls
-	virtual vector<uint32_t> GetIntegerArgumentRegisters() override
-	{
-		return vector<uint32_t>{};
-	}
-
-	virtual vector<uint32_t> GetFloatArgumentRegisters() override
-	{
-		return vector<uint32_t>{};
-	}
-
-	// Nothing is caller-saved - all registers preserved
-	virtual vector<uint32_t> GetCallerSavedRegisters() override
-	{
-		return vector<uint32_t>{};
-	}
-
-	// All GPRs are callee-saved (preserved)
-	virtual vector<uint32_t> GetCalleeSavedRegisters() override
-	{
-		return vector<uint32_t>{
-			PPC_REG_GPR0, PPC_REG_GPR1, PPC_REG_GPR2, PPC_REG_GPR3,
-			PPC_REG_GPR4, PPC_REG_GPR5, PPC_REG_GPR6, PPC_REG_GPR7,
-			PPC_REG_GPR8, PPC_REG_GPR9, PPC_REG_GPR10, PPC_REG_GPR11,
-			PPC_REG_GPR12, PPC_REG_GPR13, PPC_REG_GPR14, PPC_REG_GPR15,
-			PPC_REG_GPR16, PPC_REG_GPR17, PPC_REG_GPR18, PPC_REG_GPR19,
-			PPC_REG_GPR20, PPC_REG_GPR21, PPC_REG_GPR22, PPC_REG_GPR23,
-			PPC_REG_GPR24, PPC_REG_GPR25, PPC_REG_GPR26, PPC_REG_GPR27,
-			PPC_REG_GPR28, PPC_REG_GPR29, PPC_REG_GPR30, PPC_REG_GPR31,
-			PPC_REG_LR, PPC_REG_CTR
-		};
-	}
-
-	// No return value - these are goto targets, not functions
-	virtual uint32_t GetIntegerReturnValueRegister() override
-	{
-		return PPC_REG_INVALID;
-	}
-
-	virtual uint32_t GetFloatReturnValueRegister() override
-	{
-		return PPC_REG_INVALID;
-	}
-
-	// Not eligible for automatic detection - explicitly set by plugin
-	virtual bool IsEligibleForHeuristics() override
-	{
-		return false;
-	}
-};
-
-
 class PpcElfRelocationHandler: public RelocationHandler
 {
 public:
@@ -2889,15 +2821,6 @@ extern "C"
 		ppc_spe->RegisterCallingConvention(conv);
 		ppc_ps->RegisterCallingConvention(conv);
 		ppc64->RegisterCallingConvention(conv);
-
-	// Jump table target calling convention (for switch statement targets)
-	conv = new PpcJumpTableTargetConvention(ppc);
-	ppc->RegisterCallingConvention(conv);
-	ppcvle->RegisterCallingConvention(conv);
-	ppc_qpx->RegisterCallingConvention(conv);
-	ppc_spe->RegisterCallingConvention(conv);
-	ppc_ps->RegisterCallingConvention(conv);
-	ppc64->RegisterCallingConvention(conv);
 
 
 		conv = new PpcSvr4CallingConvention(ppc_le);
