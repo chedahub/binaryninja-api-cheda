@@ -2289,8 +2289,8 @@ bool GetLowLevelILForPPCInstruction(Architecture *arch, LowLevelILFunction &il,
 			break;
 
 		case PPC_ID_CNTLZWx:
-			ei0 = il.Intrinsic({RegisterOrFlag::Register(oper1->reg)}, PPC_INTRIN_CNTLZW,
-				{operToIL(il, oper0)});
+			ei0 = il.Intrinsic({RegisterOrFlag::Register(oper0->reg)}, PPC_INTRIN_CNTLZW,
+				{operToIL(il, oper1)});
 			il.AddInstruction(ei0);
 			break;
 
