@@ -763,6 +763,8 @@ class PowerpcArchitecture: public Architecture
 		{
 		case PPC_INTRIN_CNTLZW:
 			return "__builtin_clz";
+		case PPC_INTRIN_MFSPR:
+		    return "spr";
 		case PPC_INTRIN_FRSP:
 			return "float_round";
 		default:
@@ -821,6 +823,7 @@ class PowerpcArchitecture: public Architecture
 		switch (intrinsic)
 		{
 		case PPC_INTRIN_CNTLZW:		// rs
+		case PPC_INTRIN_MFSPR:  // spr index
 			return {NameAndType(Type::IntegerType(4, false))};
 		case PPC_INTRIN_FRSP:
 			return {NameAndType(Type::FloatType(4))};
@@ -855,6 +858,7 @@ class PowerpcArchitecture: public Architecture
 		switch (intrinsic)
 		{
 		case PPC_INTRIN_CNTLZW:		// ra
+		case PPC_INTRIN_MFSPR:  // rD
 			return {Type::IntegerType(4, false)};
 		case PPC_INTRIN_FRSP:
 			return {Type::FloatType(4)};

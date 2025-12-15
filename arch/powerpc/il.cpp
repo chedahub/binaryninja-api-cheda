@@ -2405,6 +2405,12 @@ bool GetLowLevelILForPPCInstruction(Architecture *arch, LowLevelILFunction &il,
 			il.AddInstruction(ei1);
 			break;
 
+		case PPC_ID_MFSPR:
+		    ei0 = il.Intrinsic({RegisterOrFlag::Register(oper0->reg)}, PPC_INTRIN_CNTLZW,
+				{operToIL(il, oper1)});
+			il.AddInstruction(ei0);
+			break;
+
 		ReturnUnimpl:
 		default:
 			MYLOG("%s:%s() returning Unimplemented(...) on:\n",
