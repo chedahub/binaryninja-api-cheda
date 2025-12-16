@@ -681,6 +681,8 @@ class PowerpcArchitecture: public Architecture
 
 		/* mnemonic */
 		mnemonic = GetMnemonic(&instruction);
+		if (mnemonic == nullptr)
+		    return false;
 		result.emplace_back(InstructionToken, mnemonic);
 
 		/* padding between mnemonic and operands */
@@ -763,10 +765,16 @@ class PowerpcArchitecture: public Architecture
 		{
 		case PPC_INTRIN_CNTLZW:
 			return "__builtin_clz";
-		case PPC_INTRIN_MFSPR:
-		    return "spr";
 		case PPC_INTRIN_FRSP:
 			return "float_round";
+		case PPC_INTRIN_MFSPR:
+		    return "get_spr";
+		case PPC_INTRIN_MTSPR:
+		    return "set_spr";
+		case PPC_INTRIN_MFMSR:
+		    return "get_msr";
+		case PPC_INTRIN_MTMSR:
+		    return "set_msr";
 		default:
 			if ((decodeFlags & DECODE_FLAGS_PS))
 			{
@@ -822,9 +830,18 @@ class PowerpcArchitecture: public Architecture
 	{
 		switch (intrinsic)
 		{
-		case PPC_INTRIN_CNTLZW:		// rs
-		case PPC_INTRIN_MFSPR:  // spr index
+		case PPC_INTRIN_CNTLZW:		// rS
+		case PPC_INTRIN_MFSPR:  // SPR index
 			return {NameAndType(Type::IntegerType(4, false))};
+		case PPC_INTRIN_MTSPR:
+		    return {
+            	NameAndType(Type::IntegerType(4, false)), // SPR
+            	NameAndType(Type::IntegerType(4, false))  // rS
+        	};
+		case PPC_INTRIN_MFMSR:
+			return {};
+		case PPC_INTRIN_MTMSR:
+		    return {NameAndType(Type::IntegerType(4, false))}; // rS
 		case PPC_INTRIN_FRSP:
 			return {NameAndType(Type::FloatType(4))};
 		// for now, quantize is operating on the float in, and the gqr that holds the scale
@@ -860,6 +877,12 @@ class PowerpcArchitecture: public Architecture
 		case PPC_INTRIN_CNTLZW:		// ra
 		case PPC_INTRIN_MFSPR:  // rD
 			return {Type::IntegerType(4, false)};
+		case PPC_INTRIN_MTSPR:
+		    return {};
+		case PPC_INTRIN_MFMSR:
+		    return {Type::IntegerType(4, false)};
+		case PPC_INTRIN_MTMSR:
+		    return {};
 		case PPC_INTRIN_FRSP:
 			return {Type::FloatType(4)};
 		default:

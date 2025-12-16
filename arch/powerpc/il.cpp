@@ -2410,6 +2410,21 @@ bool GetLowLevelILForPPCInstruction(Architecture *arch, LowLevelILFunction &il,
 				{operToIL(il, oper1)});
 			il.AddInstruction(ei0);
 			break;
+		
+		case PPC_ID_MTSPR:
+		    ei0 = il.Intrinsic({}, PPC_INTRIN_MTSPR, {operToIL(il, oper0), operToIL(il, oper1)});
+			il.AddInstruction(ei0);
+			break;
+
+		case PPC_ID_MFMSR:
+		    ei0 = il.Intrinsic({RegisterOrFlag::Register(oper0->reg)}, PPC_INTRIN_MFMSR, {});
+			il.AddInstruction(ei0);
+			break;
+
+		case PPC_ID_MTMSR:
+		    ei0 = il.Intrinsic({}, PPC_INTRIN_MTMSR, {operToIL(il, oper0)});
+			il.AddInstruction(ei0);
+			break;
 
 		ReturnUnimpl:
 		default:
