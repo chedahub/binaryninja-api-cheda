@@ -840,6 +840,7 @@ const char* GetMnemonic(const Instruction* instruction)
 		case PPC_ID_LWA: return "lwa";
 		case PPC_ID_LWAT: return "lwat";
 		case PPC_ID_LWAX: return "lwax";
+		case PPC_ID_LWDX: return "lwdx";
 		case PPC_ID_LWARX: return "lwarx";
 		case PPC_ID_LWAUX: return "lwaux";
 		case PPC_ID_LWBRX: return "lwbrx";

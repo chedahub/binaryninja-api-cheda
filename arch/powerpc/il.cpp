@@ -1072,6 +1072,7 @@ bool GetLowLevelILForPPCInstruction(Architecture *arch, LowLevelILFunction &il,
 		/*
 			load word [and zero] [and update]
 		*/
+		case PPC_ID_LWDX:
 		case PPC_ID_LWZX:
 		case PPC_ID_LWZUX:
 			REQUIRE3OPS

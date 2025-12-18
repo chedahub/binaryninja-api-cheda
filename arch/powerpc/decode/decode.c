@@ -3598,6 +3598,9 @@ InstructionId Decode0x1F(uint32_t word32, uint32_t decodeFlags)
 				return PPC_ID_INVALID;
 
 			return PPC_ID_MCRXRX;
+		
+		case 0x484:
+			return PPC_ID_LWDX;
 
 		case 0x48c:
 			return PPC_ID_LWAT;

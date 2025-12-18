@@ -832,6 +832,7 @@ void FillOperands32(Instruction* instruction, uint32_t word32, uint64_t address)
 		case PPC_ID_LWAX:
 		case PPC_ID_LWAUX:
 		case PPC_ID_LWBRX:
+		case PPC_ID_LWDX:
 		case PPC_ID_LWEPX:
 		case PPC_ID_LWZCIX:
 		case PPC_ID_LWZUX:
