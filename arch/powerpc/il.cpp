@@ -1977,6 +1977,21 @@ bool GetLowLevelILForPPCInstruction(Architecture *arch, LowLevelILFunction &il,
 		case PPC_ID_RFI:
 			il.AddInstruction(il.Return(il.Unimplemented()));
 			break;
+		case PPC_ID_VLE_SE_RFI:
+		{
+            // Restore MSR from SRR1 (SPR 27)
+            // mtmsr(mfspr(27))
+            ExprId valSRR1 = il.Intrinsic({}, PPC_INTRIN_MFSPR, {il.Const(4, 27)});
+            il.AddInstruction(il.Intrinsic({}, PPC_INTRIN_MTMSR, {valSRR1}));
+
+            // Return to address in SRR0 (SPR 26)
+            // return mfspr(26)
+            ExprId valSRR0 = il.Intrinsic({}, PPC_INTRIN_MFSPR, {il.Const(4, 26)});
+            
+            // Return IL을 사용하여 함수 종료 및 복귀 처리
+            il.AddInstruction(il.Return(valSRR0));
+            break;
+        }
 
 		case PPC_ID_TWU:
 			il.AddInstruction(il.Trap(0));
@@ -2433,6 +2448,20 @@ bool GetLowLevelILForPPCInstruction(Architecture *arch, LowLevelILFunction &il,
 			il.AddInstruction(ei0);
 			break;
 		
+
+		case PPC_ID_VLE_E_RLWx:
+		{
+            ExprId src = operToIL(il, oper1);
+            ExprId shiftAmt = operToIL(il, oper2);
+            ExprId result = il.RotateLeft(4, src, shiftAmt);
+
+            if (instruction->flags.rc)
+                il.AddInstruction(il.SetRegister(4, oper0->reg, result, IL_FLAGWRITE_CR0_S));
+            else
+                il.AddInstruction(il.SetRegister(4, oper0->reg, result));
+            
+            break;
+        }
 		// =========================================================
         // VLE Multiple Register Load/Store Instructions
         // =========================================================
