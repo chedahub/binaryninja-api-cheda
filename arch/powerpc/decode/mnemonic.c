@@ -2082,6 +2082,7 @@ const char* GetMnemonic(const Instruction* instruction)
 		case PPC_ID_VLE_E_STMVSRRW: return "e_stmvsrrw";
 		case PPC_ID_VLE_E_STMVCSRRW: return "e_stmvcsrrw";
 		case PPC_ID_VLE_E_STMVDSRRW: return "e_stmvdsrrw";
+		case PPC_ID_VLE_E_STMVMCSRRW: return "e_stmvmcsrrw";
 
 		case PPC_ID_VLE_SE_ADD: return "se_add";
 		case PPC_ID_VLE_SE_ADDI: return "se_addi";

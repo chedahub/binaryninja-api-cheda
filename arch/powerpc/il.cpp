@@ -489,6 +489,12 @@ static void load_float(LowLevelILFunction& il,
 	}
 }
 
+static const uint32_t vle_volatile_gprs[] = {
+    PPC_REG_GPR0, 
+    PPC_REG_GPR3, PPC_REG_GPR4, PPC_REG_GPR5, PPC_REG_GPR6, PPC_REG_GPR7,
+    PPC_REG_GPR8, PPC_REG_GPR9, PPC_REG_GPR10, PPC_REG_GPR11, PPC_REG_GPR12
+};
+
 /* returns TRUE - if this IL continues
           FALSE - if this IL terminates a block */
 bool GetLowLevelILForPPCInstruction(Architecture *arch, LowLevelILFunction &il,
@@ -2426,6 +2432,200 @@ bool GetLowLevelILForPPCInstruction(Architecture *arch, LowLevelILFunction &il,
 		    ei0 = il.Intrinsic({}, PPC_INTRIN_MTMSR, {operToIL(il, oper0)});
 			il.AddInstruction(ei0);
 			break;
+		
+		// =========================================================
+        // VLE Multiple Register Load/Store Instructions
+        // =========================================================
+
+        case PPC_ID_VLE_E_STMVGPRW:
+        {
+            // Store Multiple Volatile GPRs Word
+            // EA = (rA) + d
+            // Regs: r0, r3-r12
+            REQUIRE1OP; // oper0: Memory Operand (d(rA))
+            
+            for (size_t i = 0; i < sizeof(vle_volatile_gprs)/sizeof(vle_volatile_gprs[0]); i++)
+            {
+                // operToIL의 3번째 인자(options)에 OTI_IMM_BIAS, 4번째(extra)에 오프셋 전달
+                // 이렇게 하면 [rA + d + (i*4)] 주소가 생성됨
+                ExprId addr = operToIL(il, oper0, OTI_IMM_BIAS, i * 4);
+                ExprId val = il.Register(4, vle_volatile_gprs[i]);
+                il.AddInstruction(il.Store(4, addr, val));
+            }
+            break;
+        }
+
+        case PPC_ID_VLE_E_LDVGPRW:
+        {
+            // Load Multiple Volatile GPRs Word
+            // EA = (rA) + d
+            // Regs: r0, r3-r12
+            REQUIRE1OP;
+            
+            for (size_t i = 0; i < sizeof(vle_volatile_gprs)/sizeof(vle_volatile_gprs[0]); i++)
+            {
+                ExprId addr = operToIL(il, oper0, OTI_IMM_BIAS, i * 4);
+                il.AddInstruction(il.SetRegister(4, vle_volatile_gprs[i], il.Load(4, addr)));
+            }
+            break;
+        }
+
+        case PPC_ID_VLE_E_STMVSPRW:
+        {
+            // Store Multiple Volatile SPRs Word
+            // Order: CR, LR, CTR, XER
+            REQUIRE1OP;
+            int offset = 0;
+
+            // 1. Store CR (Construct 32-bit CR from flags - Logic from MFCR)
+            ExprId addrCR = operToIL(il, oper0, OTI_IMM_BIAS, offset);
+            ExprId valCR = il.Or(4, il.FlagBit(4, IL_FLAG_LT, 31),
+                il.Or(4, il.FlagBit(4, IL_FLAG_GT, 30),
+                il.Or(4, il.FlagBit(4, IL_FLAG_EQ, 29),
+                il.Or(4, il.FlagBit(4, IL_FLAG_SO, 28),
+                il.Or(4, il.FlagBit(4, IL_FLAG_LT_1, 27),
+                il.Or(4, il.FlagBit(4, IL_FLAG_GT_1, 26),
+                il.Or(4, il.FlagBit(4, IL_FLAG_EQ_1, 25),
+                il.Or(4, il.FlagBit(4, IL_FLAG_SO_1, 24),
+                il.Or(4, il.FlagBit(4, IL_FLAG_LT_2, 23),
+                il.Or(4, il.FlagBit(4, IL_FLAG_GT_2, 22),
+                il.Or(4, il.FlagBit(4, IL_FLAG_EQ_2, 21),
+                il.Or(4, il.FlagBit(4, IL_FLAG_SO_2, 20),
+                il.Or(4, il.FlagBit(4, IL_FLAG_LT_3, 19),
+                il.Or(4, il.FlagBit(4, IL_FLAG_GT_3, 18),
+                il.Or(4, il.FlagBit(4, IL_FLAG_EQ_3, 17),
+                il.Or(4, il.FlagBit(4, IL_FLAG_SO_3, 16),
+                il.Or(4, il.FlagBit(4, IL_FLAG_LT_4, 15),
+                il.Or(4, il.FlagBit(4, IL_FLAG_GT_4, 14),
+                il.Or(4, il.FlagBit(4, IL_FLAG_EQ_4, 13),
+                il.Or(4, il.FlagBit(4, IL_FLAG_SO_4, 12),
+                il.Or(4, il.FlagBit(4, IL_FLAG_LT_5, 11),
+                il.Or(4, il.FlagBit(4, IL_FLAG_GT_5, 10),
+                il.Or(4, il.FlagBit(4, IL_FLAG_EQ_5, 9),
+                il.Or(4, il.FlagBit(4, IL_FLAG_SO_5, 8),
+                il.Or(4, il.FlagBit(4, IL_FLAG_LT_6, 7),
+                il.Or(4, il.FlagBit(4, IL_FLAG_GT_6, 6),
+                il.Or(4, il.FlagBit(4, IL_FLAG_EQ_6, 5),
+                il.Or(4, il.FlagBit(4, IL_FLAG_SO_6, 4),
+                il.Or(4, il.FlagBit(4, IL_FLAG_LT_7, 3),
+                il.Or(4, il.FlagBit(4, IL_FLAG_GT_7, 2),
+                il.Or(4, il.FlagBit(4, IL_FLAG_EQ_7, 1),
+                il.FlagBit(4, IL_FLAG_SO_7, 0))))))))))))))))))))))))))))))));
+            il.AddInstruction(il.Store(4, addrCR, valCR));
+            offset += 4;
+
+            // 2. Store LR
+            il.AddInstruction(il.Store(4, 
+                operToIL(il, oper0, OTI_IMM_BIAS, offset), 
+                il.Register(4, PPC_REG_LR)));
+            offset += 4;
+
+            // 3. Store CTR
+            il.AddInstruction(il.Store(4, 
+                operToIL(il, oper0, OTI_IMM_BIAS, offset), 
+                il.Register(4, PPC_REG_CTR)));
+            offset += 4;
+
+            // 4. Store XER
+            il.AddInstruction(il.Store(4, 
+                operToIL(il, oper0, OTI_IMM_BIAS, offset), 
+                il.Register(4, PPC_REG_XER)));
+            break;
+        }
+
+        case PPC_ID_VLE_E_LDVSPRW:
+        {
+            // Load Multiple Volatile SPRs Word
+            // Order: CR, LR, CTR, XER
+            REQUIRE1OP;
+            int offset = 0;
+
+            // 1. Load CR (Logic from MTCRF, assuming full mask 0xFF)
+            // 임시 레지스터에 로드
+            ExprId loadedCR = il.Load(4, operToIL(il, oper0, OTI_IMM_BIAS, offset));
+            // CR 필드(8개) 업데이트 루프
+            for (int i = 0; i < 8; i++) {
+                // PPC_ID_MTCRF 로직 참조
+                ei0 = il.Or(4, loadedCR, il.Const(4, 0), IL_FLAGWRITE_MTCR0 + i);
+                il.AddInstruction(ei0);
+            }
+            offset += 4;
+
+            // 2. Load LR
+            il.AddInstruction(il.SetRegister(4, PPC_REG_LR, 
+                il.Load(4, operToIL(il, oper0, OTI_IMM_BIAS, offset))));
+            offset += 4;
+
+            // 3. Load CTR
+            il.AddInstruction(il.SetRegister(4, PPC_REG_CTR, 
+                il.Load(4, operToIL(il, oper0, OTI_IMM_BIAS, offset))));
+            offset += 4;
+
+            // 4. Load XER
+            il.AddInstruction(il.SetRegister(4, PPC_REG_XER, 
+                il.Load(4, operToIL(il, oper0, OTI_IMM_BIAS, offset))));
+            break;
+        }
+
+        case PPC_ID_VLE_E_LDVSRRW:
+        {
+            // Load Multiple Volatile SRRs Word
+            // Order: SRR0(SPR 26), SRR1(SPR 27)
+            REQUIRE1OP;
+            
+            // SRR0, SRR1이 아키텍처 레지스터 목록(arch_ppc.cpp)에 없으므로 
+            // 앞서 구현한 MTSPR Intrinsic을 활용합니다.
+            
+            // 1. Load SRR0 (SPR 26)
+            ExprId valSRR0 = il.Load(4, operToIL(il, oper0, OTI_IMM_BIAS, 0));
+            il.AddInstruction(il.Intrinsic(
+                {},                 // No outputs
+                PPC_INTRIN_MTSPR,   // MTSPR ID
+                {il.Const(4, 26), valSRR0} // Inputs: SPR Index(26), Value
+            ));
+
+            // 2. Load SRR1 (SPR 27)
+            ExprId valSRR1 = il.Load(4, operToIL(il, oper0, OTI_IMM_BIAS, 4));
+            il.AddInstruction(il.Intrinsic(
+                {},                 // No outputs
+                PPC_INTRIN_MTSPR,   // MTSPR ID
+                {il.Const(4, 27), valSRR1} // Inputs: SPR Index(27), Value
+            ));
+            
+            break;
+        }
+
+		case PPC_ID_VLE_E_STMVMCSRRW:
+        {
+            // Store Multiple Volatile MCSRRs Word
+            // Stores MCSRR0 (SPR 570) and MCSRR1 (SPR 571) to memory
+            REQUIRE1OP;
+
+            // 1. Store MCSRR0 (SPR 570) at EA
+            ExprId addr0 = operToIL(il, oper0, OTI_IMM_BIAS, 0);
+            
+            // Intrinsic: mfspr(570) -> 결과를 리턴받아 Store의 값으로 사용
+            // Outputs: {} (없음, 표현식으로 사용됨)
+            // Inputs: {SPR Number}
+            ExprId valMCSRR0 = il.Intrinsic(
+                {}, 
+                PPC_INTRIN_MFSPR, 
+                {il.Const(4, 570)} 
+            );
+            il.AddInstruction(il.Store(4, addr0, valMCSRR0));
+
+            // 2. Store MCSRR1 (SPR 571) at EA + 4
+            ExprId addr1 = operToIL(il, oper0, OTI_IMM_BIAS, 4);
+            
+            ExprId valMCSRR1 = il.Intrinsic(
+                {}, 
+                PPC_INTRIN_MFSPR, 
+                {il.Const(4, 571)} 
+            );
+            il.AddInstruction(il.Store(4, addr1, valMCSRR1));
+
+            break;
+        }
 
 		ReturnUnimpl:
 		default:

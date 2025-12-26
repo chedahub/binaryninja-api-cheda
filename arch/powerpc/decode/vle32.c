@@ -14,6 +14,9 @@ static InstructionId Decode32Vle0x06(uint32_t word32, uint32_t decodeFlags)
 	uint32_t subop = (word32 >> 12) & 0xf;
 	switch (subop)
 	{
+		case 0x1:
+			return PPC_ID_VLE_E_STMVMCSRRW;
+			
 		case 0x8:
 			return PPC_ID_VLE_E_ADDIx;
 
@@ -482,6 +485,7 @@ static void FillOperands32Vle(Instruction* instruction, uint32_t word32, uint64_
 		case PPC_ID_VLE_E_STMVSRRW:
 		case PPC_ID_VLE_E_STMVCSRRW:
 		case PPC_ID_VLE_E_STMVDSRRW:
+		case PPC_ID_VLE_E_STMVMCSRRW:
 			PushMemRA8(instruction, word32);
 			break;
 
