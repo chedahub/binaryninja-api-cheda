@@ -644,6 +644,14 @@ bool GetLowLevelILForPPCInstruction(Architecture *arch, LowLevelILFunction &il,
 			);
 			il.AddInstruction(ei0);
 			break;
+		
+		case PPC_ID_VLE_SE_ANDC: // se_andc rX, rY  =>  rX = rX & ~rY
+			REQUIRE2OPS		
+			ei0 = il.Not(4, operToIL(il, oper1));
+			ei0= il.And(4, operToIL(il, oper0), ei0);
+			ei1 = il.SetRegister(4, oper0->reg, ei0);
+			il.AddInstruction(ei1);
+			break;
 
 		case PPC_ID_ANDIx:
 		case PPC_ID_ANDIS:
@@ -1722,6 +1730,15 @@ bool GetLowLevelILForPPCInstruction(Architecture *arch, LowLevelILFunction &il,
 			);
 			il.AddInstruction(ei0);
 			break;
+		
+		case PPC_ID_VLE_SE_SLW:
+			// se_slw rX, rY  =>  rX = rX << (rY & 0x3f)
+			REQUIRE2OPS
+			ei0 = il.And(4, il.Register(4, oper1->reg), il.Const(4, 0x3f));
+			ei1 = il.ShiftLeft(4, il.Register(4, oper0->reg), ei0);
+			
+			il.AddInstruction(il.SetRegister(4, oper0->reg, ei1));
+			break;
 
 		case PPC_ID_SRDIx:
 			opSize = 8;
@@ -1978,20 +1995,16 @@ bool GetLowLevelILForPPCInstruction(Architecture *arch, LowLevelILFunction &il,
 			il.AddInstruction(il.Return(il.Unimplemented()));
 			break;
 		case PPC_ID_VLE_SE_RFI:
-		{
             // Restore MSR from SRR1 (SPR 27)
             // mtmsr(mfspr(27))
-            ExprId valSRR1 = il.Intrinsic({}, PPC_INTRIN_MFSPR, {il.Const(4, 27)});
-            il.AddInstruction(il.Intrinsic({}, PPC_INTRIN_MTMSR, {valSRR1}));
+            ei0 = il.Intrinsic({}, PPC_INTRIN_MFSPR, {il.Const(4, 27)});
+            il.AddInstruction(il.Intrinsic({}, PPC_INTRIN_MTMSR, {ei0}));
 
             // Return to address in SRR0 (SPR 26)
             // return mfspr(26)
-            ExprId valSRR0 = il.Intrinsic({}, PPC_INTRIN_MFSPR, {il.Const(4, 26)});
-            
-            // Return IL을 사용하여 함수 종료 및 복귀 처리
-            il.AddInstruction(il.Return(valSRR0));
+            ei1 = il.Intrinsic({}, PPC_INTRIN_MFSPR, {il.Const(4, 26)});
+            il.AddInstruction(il.Return(ei1));
             break;
-        }
 
 		case PPC_ID_VLE_SE_ISYNC:
 		case PPC_ID_ISYNC:
@@ -2463,20 +2476,18 @@ bool GetLowLevelILForPPCInstruction(Architecture *arch, LowLevelILFunction &il,
             break;
 
 		case PPC_ID_VLE_E_RLWx:
-		{
 			REQUIRE3OPS
-            ExprId src = operToIL(il, oper1);
-            ExprId shiftAmt = operToIL(il, oper2);
-			shiftAmt = il.And(4, shiftAmt, il.Const(4, 0x1f));
-            ExprId result = il.RotateLeft(4, src, shiftAmt);
+			ei0 = il.And(4, operToIL(il, oper2), il.Const(4, 0x1f));
+            ei0 = il.RotateLeft(4, operToIL(il, oper1), ei0);
 
             if (instruction->flags.rc)
-                il.AddInstruction(il.SetRegister(4, oper0->reg, result, IL_FLAGWRITE_CR0_S));
+				ei1 = il.SetRegister(4, oper0->reg, ei0, IL_FLAGWRITE_CR0_S);
             else
-                il.AddInstruction(il.SetRegister(4, oper0->reg, result));
+				ei1 = il.SetRegister(4, oper0->reg, ei0);
             
+			il.AddInstruction(ei1);
             break;
-        }
+
 		// =========================================================
         // VLE Multiple Register Load/Store Instructions
         // =========================================================
@@ -2484,29 +2495,23 @@ bool GetLowLevelILForPPCInstruction(Architecture *arch, LowLevelILFunction &il,
         case PPC_ID_VLE_E_STMVGPRW:
         {
             REQUIRE1OP
-            
             for (size_t i = 0; i < sizeof(vle_volatile_gprs)/sizeof(vle_volatile_gprs[0]); i++)
             {
-                // operToIL의 3번째 인자(options)에 OTI_IMM_BIAS, 4번째(extra)에 오프셋 전달
-                // 이렇게 하면 [rA + d + (i*4)] 주소가 생성됨
-                ExprId addr = operToIL(il, oper0, OTI_IMM_BIAS, i * 4);
-                ExprId val = il.Register(4, vle_volatile_gprs[i]);
-                il.AddInstruction(il.Store(4, addr, val));
+                ei0 = operToIL(il, oper0, OTI_IMM_BIAS, i * 4);
+                ei1 = il.Register(4, vle_volatile_gprs[i]);
+                il.AddInstruction(il.Store(4, ei0, ei1));
             }
             break;
         }
 
         case PPC_ID_VLE_E_LDVGPRW:
         {
-            // Load Multiple Volatile GPRs Word
-            // EA = (rA) + d
-            // Regs: r0, r3-r12
-            REQUIRE1OP;
-            
+            REQUIRE1OP
             for (size_t i = 0; i < sizeof(vle_volatile_gprs)/sizeof(vle_volatile_gprs[0]); i++)
             {
-                ExprId addr = operToIL(il, oper0, OTI_IMM_BIAS, i * 4);
-                il.AddInstruction(il.SetRegister(4, vle_volatile_gprs[i], il.Load(4, addr)));
+                ei0 = operToIL(il, oper0, OTI_IMM_BIAS, i * 4);
+				ei1 = il.SetRegister(4, vle_volatile_gprs[i], il.Load(4, ei0));
+                il.AddInstruction(ei1);
             }
             break;
         }
@@ -2515,12 +2520,12 @@ bool GetLowLevelILForPPCInstruction(Architecture *arch, LowLevelILFunction &il,
         {
             // Store Multiple Volatile SPRs Word
             // Order: CR, LR, CTR, XER
-            REQUIRE1OP;
+            REQUIRE1OP
             int offset = 0;
 
             // 1. Store CR (Construct 32-bit CR from flags - Logic from MFCR)
-            ExprId addrCR = operToIL(il, oper0, OTI_IMM_BIAS, offset);
-            ExprId valCR = il.Or(4, il.FlagBit(4, IL_FLAG_LT, 31),
+            ei0 = operToIL(il, oper0, OTI_IMM_BIAS, offset);
+            ei1 = il.Or(4, il.FlagBit(4, IL_FLAG_LT, 31),
                 il.Or(4, il.FlagBit(4, IL_FLAG_GT, 30),
                 il.Or(4, il.FlagBit(4, IL_FLAG_EQ, 29),
                 il.Or(4, il.FlagBit(4, IL_FLAG_SO, 28),
@@ -2552,7 +2557,7 @@ bool GetLowLevelILForPPCInstruction(Architecture *arch, LowLevelILFunction &il,
                 il.Or(4, il.FlagBit(4, IL_FLAG_GT_7, 2),
                 il.Or(4, il.FlagBit(4, IL_FLAG_EQ_7, 1),
                 il.FlagBit(4, IL_FLAG_SO_7, 0))))))))))))))))))))))))))))))));
-            il.AddInstruction(il.Store(4, addrCR, valCR));
+            il.AddInstruction(il.Store(4, ei0, ei1));
             offset += 4;
 
             // 2. Store LR
@@ -2578,17 +2583,14 @@ bool GetLowLevelILForPPCInstruction(Architecture *arch, LowLevelILFunction &il,
         {
             // Load Multiple Volatile SPRs Word
             // Order: CR, LR, CTR, XER
-            REQUIRE1OP;
+            REQUIRE1OP
             int offset = 0;
 
-            // 1. Load CR (Logic from MTCRF, assuming full mask 0xFF)
-            // 임시 레지스터에 로드
-            ExprId loadedCR = il.Load(4, operToIL(il, oper0, OTI_IMM_BIAS, offset));
+            ei0 = il.Load(4, operToIL(il, oper0, OTI_IMM_BIAS, offset));
             // CR 필드(8개) 업데이트 루프
             for (int i = 0; i < 8; i++) {
-                // PPC_ID_MTCRF 로직 참조
-                ei0 = il.Or(4, loadedCR, il.Const(4, 0), IL_FLAGWRITE_MTCR0 + i);
-                il.AddInstruction(ei0);
+                ei1 = il.Or(4, ei0, il.Const(4, 0), IL_FLAGWRITE_MTCR0 + i);
+                il.AddInstruction(ei1);
             }
             offset += 4;
 
@@ -2609,61 +2611,35 @@ bool GetLowLevelILForPPCInstruction(Architecture *arch, LowLevelILFunction &il,
         }
 
         case PPC_ID_VLE_E_LDVSRRW:
-        {
             // Load Multiple Volatile SRRs Word
             // Order: SRR0(SPR 26), SRR1(SPR 27)
-            REQUIRE1OP;
-            
-            // SRR0, SRR1이 아키텍처 레지스터 목록(arch_ppc.cpp)에 없으므로 
-            // 앞서 구현한 MTSPR Intrinsic을 활용합니다.
-            
+            REQUIRE1OP
+          
             // 1. Load SRR0 (SPR 26)
-            ExprId valSRR0 = il.Load(4, operToIL(il, oper0, OTI_IMM_BIAS, 0));
-            il.AddInstruction(il.Intrinsic(
-                {},                 // No outputs
-                PPC_INTRIN_MTSPR,   // MTSPR ID
-                {il.Const(4, 26), valSRR0} // Inputs: SPR Index(26), Value
-            ));
+            ei0 = il.Load(4, operToIL(il, oper0, OTI_IMM_BIAS, 0));
+            il.AddInstruction(il.Intrinsic( {}, PPC_INTRIN_MTSPR, {il.Const(4, 26), ei0} ));
 
             // 2. Load SRR1 (SPR 27)
-            ExprId valSRR1 = il.Load(4, operToIL(il, oper0, OTI_IMM_BIAS, 4));
-            il.AddInstruction(il.Intrinsic(
-                {},                 // No outputs
-                PPC_INTRIN_MTSPR,   // MTSPR ID
-                {il.Const(4, 27), valSRR1} // Inputs: SPR Index(27), Value
-            ));
+            ei1 = il.Load(4, operToIL(il, oper0, OTI_IMM_BIAS, 4));
+            il.AddInstruction(il.Intrinsic( {}, PPC_INTRIN_MTSPR, {il.Const(4, 27), ei1} ));
             
             break;
-        }
 
 		case PPC_ID_VLE_E_STMVMCSRRW:
         {
             // Store Multiple Volatile MCSRRs Word
             // Stores MCSRR0 (SPR 570) and MCSRR1 (SPR 571) to memory
-            REQUIRE1OP;
+            REQUIRE1OP
 
             // 1. Store MCSRR0 (SPR 570) at EA
-            ExprId addr0 = operToIL(il, oper0, OTI_IMM_BIAS, 0);
-            
-            // Intrinsic: mfspr(570) -> 결과를 리턴받아 Store의 값으로 사용
-            // Outputs: {} (없음, 표현식으로 사용됨)
-            // Inputs: {SPR Number}
-            ExprId valMCSRR0 = il.Intrinsic(
-                {}, 
-                PPC_INTRIN_MFSPR, 
-                {il.Const(4, 570)} 
-            );
-            il.AddInstruction(il.Store(4, addr0, valMCSRR0));
+            ei0 = operToIL(il, oper0, OTI_IMM_BIAS, 0);
+            ei1 = il.Intrinsic( {}, PPC_INTRIN_MFSPR, {il.Const(4, 570)} );
+            il.AddInstruction(il.Store(4, ei0, ei1));
 
             // 2. Store MCSRR1 (SPR 571) at EA + 4
-            ExprId addr1 = operToIL(il, oper0, OTI_IMM_BIAS, 4);
-            
-            ExprId valMCSRR1 = il.Intrinsic(
-                {}, 
-                PPC_INTRIN_MFSPR, 
-                {il.Const(4, 571)} 
-            );
-            il.AddInstruction(il.Store(4, addr1, valMCSRR1));
+            ei0 = operToIL(il, oper0, OTI_IMM_BIAS, 4);
+            ei1 = il.Intrinsic( {}, PPC_INTRIN_MFSPR, {il.Const(4, 571)} );
+            il.AddInstruction(il.Store(4, ei0, ei1));
 
             break;
         }

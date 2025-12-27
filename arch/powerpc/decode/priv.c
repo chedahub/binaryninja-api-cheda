@@ -174,7 +174,7 @@ InstructionId VleTranslateMnemonic(InstructionId id)
 		case PPC_ID_VLE_SE_ADD: return PPC_ID_ADDx;
 		case PPC_ID_VLE_SE_ADDI: return PPC_ID_ADDIx;
 		case PPC_ID_VLE_SE_ANDx: return PPC_ID_ANDx;
-		case PPC_ID_VLE_SE_ANDC: return PPC_ID_ANDCx;
+		//case PPC_ID_VLE_SE_ANDC: return PPC_ID_ANDCx;
 		case PPC_ID_VLE_SE_ANDI: return PPC_ID_ANDIx;
 		case PPC_ID_VLE_SE_Bx: return PPC_ID_Bx;
 		case PPC_ID_VLE_SE_BCLRI: return PPC_ID_ANDIx;
@@ -206,10 +206,10 @@ InstructionId VleTranslateMnemonic(InstructionId id)
 		case PPC_ID_VLE_SE_OR: return PPC_ID_ORx;
 		case PPC_ID_VLE_SE_RFCI: return PPC_ID_RFCI;
 		case PPC_ID_VLE_SE_RFDI: return PPC_ID_RFDI;
-		case PPC_ID_VLE_SE_RFI: return PPC_ID_RFI;
+		//case PPC_ID_VLE_SE_RFI: return PPC_ID_RFI;
 		case PPC_ID_VLE_SE_RFMCI: return PPC_ID_RFMCI;
 		case PPC_ID_VLE_SE_SC: return PPC_ID_SC;
-		case PPC_ID_VLE_SE_SLW: return PPC_ID_SLWx;
+		//case PPC_ID_VLE_SE_SLW: return PPC_ID_SLWx;
 		case PPC_ID_VLE_SE_SLWI: return PPC_ID_SLWIx;
 		case PPC_ID_VLE_SE_SRAW: return PPC_ID_SRAWx;
 		case PPC_ID_VLE_SE_SRAWI: return PPC_ID_SRAWIx;
