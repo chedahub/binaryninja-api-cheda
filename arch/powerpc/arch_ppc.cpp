@@ -775,6 +775,12 @@ class PowerpcArchitecture: public Architecture
 		    return "get_msr";
 		case PPC_INTRIN_MTMSR:
 		    return "set_msr";
+		case PPC_INTRIN_ISYNC:
+			return "isync";
+		case PPC_INTRIN_WRTEEI:
+            return "wrteei";
+		case PPC_INTRIN_EIEIO:
+            return "eieio";
 		default:
 			if ((decodeFlags & DECODE_FLAGS_PS))
 			{
@@ -832,6 +838,8 @@ class PowerpcArchitecture: public Architecture
 		{
 		case PPC_INTRIN_CNTLZW:		// rS
 		case PPC_INTRIN_MFSPR:  // SPR index
+		case PPC_INTRIN_MTMSR:
+		case PPC_INTRIN_WRTEEI:
 			return {NameAndType(Type::IntegerType(4, false))};
 		case PPC_INTRIN_MTSPR:
 		    return {
@@ -839,9 +847,9 @@ class PowerpcArchitecture: public Architecture
             	NameAndType(Type::IntegerType(4, false))  // rS
         	};
 		case PPC_INTRIN_MFMSR:
+		case PPC_INTRIN_ISYNC:
+		case PPC_INTRIN_EIEIO:
 			return {};
-		case PPC_INTRIN_MTMSR:
-		    return {NameAndType(Type::IntegerType(4, false))}; // rS
 		case PPC_INTRIN_FRSP:
 			return {NameAndType(Type::FloatType(4))};
 		// for now, quantize is operating on the float in, and the gqr that holds the scale
@@ -876,12 +884,13 @@ class PowerpcArchitecture: public Architecture
 		{
 		case PPC_INTRIN_CNTLZW:		// ra
 		case PPC_INTRIN_MFSPR:  // rD
+		case PPC_INTRIN_MFMSR:
 			return {Type::IntegerType(4, false)};
 		case PPC_INTRIN_MTSPR:
-		    return {};
-		case PPC_INTRIN_MFMSR:
-		    return {Type::IntegerType(4, false)};
 		case PPC_INTRIN_MTMSR:
+		case PPC_INTRIN_ISYNC:
+		case PPC_INTRIN_WRTEEI:
+		case PPC_INTRIN_EIEIO:
 		    return {};
 		case PPC_INTRIN_FRSP:
 			return {Type::FloatType(4)};

@@ -1993,6 +1993,11 @@ bool GetLowLevelILForPPCInstruction(Architecture *arch, LowLevelILFunction &il,
             break;
         }
 
+		case PPC_ID_VLE_SE_ISYNC:
+		case PPC_ID_ISYNC:
+			il.AddInstruction(il.Intrinsic({}, PPC_INTRIN_ISYNC, {}));
+            break;
+
 		case PPC_ID_TWU:
 			il.AddInstruction(il.Trap(0));
 			break;
@@ -2448,11 +2453,21 @@ bool GetLowLevelILForPPCInstruction(Architecture *arch, LowLevelILFunction &il,
 			il.AddInstruction(ei0);
 			break;
 		
+		case PPC_ID_WRTEEI:
+            REQUIRE1OP        
+            il.AddInstruction(il.Intrinsic({}, PPC_INTRIN_WRTEEI, {operToIL(il, oper0)}));
+            break;
+		
+		case PPC_ID_EIEIO:
+            il.AddInstruction(il.Intrinsic({}, PPC_INTRIN_EIEIO, {}));
+            break;
 
 		case PPC_ID_VLE_E_RLWx:
 		{
+			REQUIRE3OPS
             ExprId src = operToIL(il, oper1);
             ExprId shiftAmt = operToIL(il, oper2);
+			shiftAmt = il.And(4, shiftAmt, il.Const(4, 0x1f));
             ExprId result = il.RotateLeft(4, src, shiftAmt);
 
             if (instruction->flags.rc)
@@ -2468,10 +2483,7 @@ bool GetLowLevelILForPPCInstruction(Architecture *arch, LowLevelILFunction &il,
 
         case PPC_ID_VLE_E_STMVGPRW:
         {
-            // Store Multiple Volatile GPRs Word
-            // EA = (rA) + d
-            // Regs: r0, r3-r12
-            REQUIRE1OP; // oper0: Memory Operand (d(rA))
+            REQUIRE1OP
             
             for (size_t i = 0; i < sizeof(vle_volatile_gprs)/sizeof(vle_volatile_gprs[0]); i++)
             {
