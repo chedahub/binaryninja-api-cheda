@@ -2003,8 +2003,16 @@ bool GetLowLevelILForPPCInstruction(Architecture *arch, LowLevelILFunction &il,
             // Return to address in SRR0 (SPR 26)
             // return mfspr(26)
             ei1 = il.Intrinsic({}, PPC_INTRIN_MFSPR, {il.Const(4, 26)});
-            il.AddInstruction(il.Return(ei1));
+            il.AddInstruction(il.Jump(ei1));
             break;
+		
+		case PPC_ID_VLE_SE_CMPHL:
+			// se_cmphl rA, rB
+			// Compare Logical (Unsigned): CR0 = Compare(rA, rB)
+			REQUIRE2OPS
+			ei0 = il.Sub(4, operToIL(il, oper0), operToIL(il, oper1), IL_FLAGWRITE_CR0_U);
+			il.AddInstruction(ei0);
+			break;
 
 		case PPC_ID_VLE_SE_ISYNC:
 		case PPC_ID_ISYNC:
@@ -2430,12 +2438,44 @@ bool GetLowLevelILForPPCInstruction(Architecture *arch, LowLevelILFunction &il,
 			break;
 		
 		case PPC_ID_SPE_EFSTSTGT:
-		case PPC_ID_SPE_EFSTSTLT:
-		case PPC_ID_SPE_EFSTSTEQ:
+		{
+			// SPE efststgt: if (rA > rB) then crD[GT] = 1, else crD[GT] = 0
+			// All other CR bits (LT, EQ, SO) are cleared
 			REQUIRE3OPS
-			ei0 = il.FloatSub(4, operToIL(il, oper1), operToIL(il, oper2), crxToFlagWriteType(oper0->reg, PPC_SUF_F));
-			il.AddInstruction(ei0);
+			uint32_t crField = oper0->reg - PPC_REG_CRF0;
+			ei0 = il.FloatCompareGreaterThan(4, operToIL(il, oper1), operToIL(il, oper2));
+			il.AddInstruction(il.SetFlag(4*crField + IL_FLAG_LT, il.Const(0, 0)));
+			il.AddInstruction(il.SetFlag(4*crField + IL_FLAG_GT, ei0));
+			il.AddInstruction(il.SetFlag(4*crField + IL_FLAG_EQ, il.Const(0, 0)));
+			il.AddInstruction(il.SetFlag(4*crField + IL_FLAG_SO, il.Const(0, 0)));
 			break;
+		}
+		case PPC_ID_SPE_EFSTSTLT:
+		{
+			// SPE efststlt: if (rA < rB) then crD[GT] = 1, else crD[GT] = 0
+			// All other CR bits (LT, EQ, SO) are cleared
+			REQUIRE3OPS
+			uint32_t crField = oper0->reg - PPC_REG_CRF0;
+			ei0 = il.FloatCompareLessThan(4, operToIL(il, oper1), operToIL(il, oper2));
+			il.AddInstruction(il.SetFlag(4*crField + IL_FLAG_LT, il.Const(0, 0)));
+			il.AddInstruction(il.SetFlag(4*crField + IL_FLAG_GT, ei0));
+			il.AddInstruction(il.SetFlag(4*crField + IL_FLAG_EQ, il.Const(0, 0)));
+			il.AddInstruction(il.SetFlag(4*crField + IL_FLAG_SO, il.Const(0, 0)));
+			break;
+		}
+		case PPC_ID_SPE_EFSTSTEQ:
+		{
+			// SPE efststeq: if (rA == rB) then crD[GT] = 1, else crD[GT] = 0
+			// All other CR bits (LT, EQ, SO) are cleared
+			REQUIRE3OPS
+			uint32_t crField = oper0->reg - PPC_REG_CRF0;
+			ei0 = il.FloatCompareEqual(4, operToIL(il, oper1), operToIL(il, oper2));
+			il.AddInstruction(il.SetFlag(4*crField + IL_FLAG_LT, il.Const(0, 0)));
+			il.AddInstruction(il.SetFlag(4*crField + IL_FLAG_GT, ei0));
+			il.AddInstruction(il.SetFlag(4*crField + IL_FLAG_EQ, il.Const(0, 0)));
+			il.AddInstruction(il.SetFlag(4*crField + IL_FLAG_SO, il.Const(0, 0)));
+			break;
+		}
 		
 		case PPC_ID_SPE_EFSMADD:
 			REQUIRE3OPS
