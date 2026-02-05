@@ -2007,17 +2007,22 @@ bool GetLowLevelILForPPCInstruction(Architecture *arch, LowLevelILFunction &il,
             break;
 		
 		case PPC_ID_VLE_SE_CMPHL:
-			// se_cmphl rA, rB
-			// Compare Logical (Unsigned): CR0 = Compare(rA, rB)
 			REQUIRE2OPS
-			ei0 = il.Sub(4, operToIL(il, oper0), operToIL(il, oper1), IL_FLAGWRITE_CR0_U);
-			il.AddInstruction(ei0);
+    		ei0 = il.Sub(4,
+        		il.ZeroExtend(4, il.LowPart(2, operToIL(il, oper0))),  // 하위 16비트 zero-extend
+        		il.ZeroExtend(4, il.LowPart(2, operToIL(il, oper1))),  // 하위 16비트 zero-extend
+        		IL_FLAGWRITE_CR0_U
+    		);
+    		il.AddInstruction(ei0);
 			break;
 
 		case PPC_ID_VLE_SE_ISYNC:
 		case PPC_ID_ISYNC:
 			il.AddInstruction(il.Intrinsic({}, PPC_INTRIN_ISYNC, {}));
             break;
+		case PPC_ID_SYNC:
+			il.AddInstruction(il.Intrinsic({}, PPC_INTRIN_SYNC, {}));
+			break;
 
 		case PPC_ID_TWU:
 			il.AddInstruction(il.Trap(0));
@@ -2503,6 +2508,11 @@ bool GetLowLevelILForPPCInstruction(Architecture *arch, LowLevelILFunction &il,
 		
 		case PPC_ID_MTSPR:
 		    ei0 = il.Intrinsic({}, PPC_INTRIN_MTSPR, {operToIL(il, oper0), operToIL(il, oper1)});
+			il.AddInstruction(ei0);
+			break;
+		
+		case PPC_ID_MTXER:
+		    ei0 = il.Intrinsic({}, PPC_INTRIN_MTSPR, {il.Const(4, 1), operToIL(il, oper0)});
 			il.AddInstruction(ei0);
 			break;
 

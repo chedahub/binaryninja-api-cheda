@@ -777,6 +777,8 @@ class PowerpcArchitecture: public Architecture
 		    return "set_msr";
 		case PPC_INTRIN_ISYNC:
 			return "isync";
+		case PPC_INTRIN_SYNC:
+			return "sync";
 		case PPC_INTRIN_WRTEEI:
             return "wrteei";
 		case PPC_INTRIN_EIEIO:
@@ -848,6 +850,7 @@ class PowerpcArchitecture: public Architecture
         	};
 		case PPC_INTRIN_MFMSR:
 		case PPC_INTRIN_ISYNC:
+		case PPC_INTRIN_SYNC:
 		case PPC_INTRIN_EIEIO:
 			return {};
 		case PPC_INTRIN_FRSP:
@@ -889,6 +892,7 @@ class PowerpcArchitecture: public Architecture
 		case PPC_INTRIN_MTSPR:
 		case PPC_INTRIN_MTMSR:
 		case PPC_INTRIN_ISYNC:
+		case PPC_INTRIN_SYNC:
 		case PPC_INTRIN_WRTEEI:
 		case PPC_INTRIN_EIEIO:
 		    return {};
