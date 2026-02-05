@@ -2627,24 +2627,20 @@ bool GetLowLevelILForPPCInstruction(Architecture *arch, LowLevelILFunction &il,
             int offset = 0;
 
             ei0 = il.Load(4, operToIL(il, oper0, OTI_IMM_BIAS, offset));
-            // CR 필드(8개) 업데이트 루프
             for (int i = 0; i < 8; i++) {
                 ei1 = il.Or(4, ei0, il.Const(4, 0), IL_FLAGWRITE_MTCR0 + i);
                 il.AddInstruction(ei1);
             }
             offset += 4;
 
-            // 2. Load LR
             il.AddInstruction(il.SetRegister(4, PPC_REG_LR, 
                 il.Load(4, operToIL(il, oper0, OTI_IMM_BIAS, offset))));
             offset += 4;
 
-            // 3. Load CTR
             il.AddInstruction(il.SetRegister(4, PPC_REG_CTR, 
                 il.Load(4, operToIL(il, oper0, OTI_IMM_BIAS, offset))));
             offset += 4;
 
-            // 4. Load XER
             il.AddInstruction(il.SetRegister(4, PPC_REG_XER, 
                 il.Load(4, operToIL(il, oper0, OTI_IMM_BIAS, offset))));
             break;
@@ -2683,6 +2679,41 @@ bool GetLowLevelILForPPCInstruction(Architecture *arch, LowLevelILFunction &il,
 
             break;
         }
+
+		/* SPE store double word - stores register pair (RS+1:RS) as 64-bit */
+		case PPC_ID_SPE_EVSTDD:
+		{
+			REQUIRE3OPS
+
+	    	uint32_t regLow = oper0->reg;
+			uint32_t regHigh = oper0->reg + 1;
+				
+			// EA = (RA|0) + (UIMM * 8)
+			// Store high word (RS+1) at EA
+			ei0 = il.Store(4,
+				il.Add(addressSize_l,
+					operToIL(il, oper1, OTI_GPR0_ZERO, PPC_IL_EXTRA_DEFAULT, addressSize_l),
+					il.Const(addressSize_l, oper2->uimm * 8)
+				),
+				il.Register(4, regHigh)
+			);
+			il.AddInstruction(ei0);
+				
+			// Store low word (RS) at EA+4
+			ei1 = il.Store(4,
+				il.Add(addressSize_l,
+					il.Add(addressSize_l,
+						operToIL(il, oper1, OTI_GPR0_ZERO, PPC_IL_EXTRA_DEFAULT, addressSize_l),
+						il.Const(addressSize_l, oper2->uimm * 8)
+					),
+					il.Const(addressSize_l, 4)
+				),
+				il.Register(4, regLow)
+			);
+			il.AddInstruction(ei1);
+			
+			break;
+		}
 
 		ReturnUnimpl:
 		default:
