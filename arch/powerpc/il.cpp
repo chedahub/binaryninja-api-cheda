@@ -2007,10 +2007,10 @@ bool GetLowLevelILForPPCInstruction(Architecture *arch, LowLevelILFunction &il,
             break;
 		
 		case PPC_ID_VLE_SE_CMPHL:
-			REQUIRE2OPS
+			REQUIRE3OPS
     		ei0 = il.Sub(4,
-        		il.ZeroExtend(4, il.LowPart(2, operToIL(il, oper0))),  // 하위 16비트 zero-extend
-        		il.ZeroExtend(4, il.LowPart(2, operToIL(il, oper1))),  // 하위 16비트 zero-extend
+        		il.And(4, operToIL(il, oper1), il.Const(4, 0xFFFF)),  // rA & 0xFFFF
+       			il.And(4, operToIL(il, oper2), il.Const(4, 0xFFFF)),  // rB & 0xFFFF
         		IL_FLAGWRITE_CR0_U
     		);
     		il.AddInstruction(ei0);
