@@ -682,7 +682,7 @@ static void FillOperands16Vle(Instruction* instruction, uint16_t word16, uint64_
 			PushRegister(instruction, PPC_OP_REG_RA, Gpr(rx));
 			if (translate)
 			{
-				uint32_t value = 1ul << ui5;
+				uint32_t value = 1ul << (31 - ui5);
 				PushRegister(instruction, PPC_OP_REG_RS, Gpr(rx));
 				PushUIMMValue(instruction, value);
 			}
