@@ -1016,6 +1016,22 @@ class PowerpcArchitecture: public Architecture
 						)
 					);
 				}
+				else if (op == LLIL_SBB || op == LLIL_SUB)
+    			{
+       				return il.Not(0, 
+            			il.CompareUnsignedLessThan(size,
+                			il.GetExprForRegisterOrConstant(operands[0], size),
+                			il.GetExprForRegisterOrConstant(operands[1], size)
+            			)
+        			);
+    			}
+    			else if (op == LLIL_ADC || op == LLIL_ADD)
+    			{
+			        return il.CompareUnsignedLessThan(size,
+            			il.GetExprForRegisterOrConstantOperation(op, size, operands, operandCount),
+            			il.GetExprForRegisterOrConstant(operands[0], size)
+        			);
+    			}
 				break;
 			case IL_FLAG_LT:
 			case IL_FLAG_LT_1:
