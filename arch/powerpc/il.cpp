@@ -2414,12 +2414,22 @@ bool GetLowLevelILForPPCInstruction(Architecture *arch, LowLevelILFunction &il,
 			break;
 		
 		case PPC_ID_VLE_SE_BTSTI:
+		{
 		    REQUIRE2OPS
-			ei0 = il.TestBit(addressSize_l,
-				operToIL_a(il, oper0, addressSize_l),
-				operToIL_a(il, oper1, addressSize_l));
+
+			uint32_t bitPos = 31 - oper1->uimm;
+        	uint32_t mask = 1u << bitPos;
+        
+        	// AND the register with the mask and set CR0 flags
+        	ei0 = il.And(addressSize_l,
+           		operToIL_a(il, oper0, addressSize_l),
+            	il.Const(addressSize_l, mask),
+            	IL_FLAGWRITE_CR0_U 
+        	);
+
 			il.AddInstruction(ei0);
 			break;
+		}
 		
 		case PPC_ID_SPE_EFSCFSI:
 		case PPC_ID_SPE_EFSCFUI:
