@@ -2461,6 +2461,12 @@ public:
 	}
 
 
+	virtual bool IsStackReservedForArgumentRegisters() override
+	{
+		return true;
+	}
+
+
 	virtual vector<uint32_t> GetFloatArgumentRegisters() override
 	{
 		return vector<uint32_t>{
