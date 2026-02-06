@@ -2523,6 +2523,42 @@ public:
 	{
 		return PPC_REG_FR1;
 	}
+
+
+	/* Big-Endian sub-word stack parameter adjustment.
+
+	   PPC SVR4 ABI: caller always stores arguments as full words (stw) on
+	   the stack, but when the callee's parameter type is smaller than a
+	   word (e.g. uint8_t), the callee reads from an offset that accounts
+	   for Big-Endian byte ordering.
+
+	   Example (uint8_t passed on stack):
+	     Caller:  se_stw r0, 8(r1)      → writes 4 bytes at r1+8
+	     Callee:  e_lbz  r11, 59(r1)    → r1_callee+59 = r1_caller+11
+	                                       = r1_caller+8 + 3  (BE LSB)
+
+	   Binary Ninja's default mapping sees offset 8 (caller) and offset 11
+	   (callee) as different variables.  By word-aligning the callee's
+	   incoming stack offset we map it back to the correct parameter slot.
+	*/
+	virtual Variable GetParameterVariableForIncomingVariable(
+		const Variable& var, Function* func) override
+	{
+		if (var.type == StackVariableSourceType
+			&& GetArchitecture()->GetEndianness() == BigEndian)
+		{
+			int64_t aligned = var.storage & ~(int64_t)3;
+			if (aligned != var.storage)
+			{
+				Variable result;
+				result.type = var.type;
+				result.index = var.index;
+				result.storage = aligned;
+				return result;
+			}
+		}
+		return CallingConvention::GetParameterVariableForIncomingVariable(var, func);
+	}
 };
 
 class PpcLinuxSyscallCallingConvention: public CallingConvention
