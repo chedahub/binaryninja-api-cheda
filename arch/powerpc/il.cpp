@@ -2732,11 +2732,30 @@ bool GetLowLevelILForPPCInstruction(Architecture *arch, LowLevelILFunction &il,
             break;
         }
 
+        case PPC_ID_VLE_E_STMVSRRW:
+        {
+            // Store Multiple Volatile SRRs Word
+            // Stores SRR0 (SPR 26) and SRR1 (SPR 27) to memory
+            REQUIRE1OP
+
+            // 1. Store SRR0 (SPR 26) at EA
+            ei0 = operToIL(il, oper0, OTI_IMM_BIAS, 0);
+            ei1 = il.Intrinsic( {}, PPC_INTRIN_MFSPR, {il.Const(4, 26)} );
+            il.AddInstruction(il.Store(4, ei0, ei1));
+
+            // 2. Store SRR1 (SPR 27) at EA + 4
+            ei0 = operToIL(il, oper0, OTI_IMM_BIAS, 4);
+            ei1 = il.Intrinsic( {}, PPC_INTRIN_MFSPR, {il.Const(4, 27)} );
+            il.AddInstruction(il.Store(4, ei0, ei1));
+
+            break;
+        }
+
         case PPC_ID_VLE_E_LDVSRRW:
             // Load Multiple Volatile SRRs Word
             // Order: SRR0(SPR 26), SRR1(SPR 27)
             REQUIRE1OP
-          
+
             // 1. Load SRR0 (SPR 26)
             ei0 = il.Load(4, operToIL(il, oper0, OTI_IMM_BIAS, 0));
             il.AddInstruction(il.Intrinsic( {}, PPC_INTRIN_MTSPR, {il.Const(4, 26), ei0} ));
@@ -2744,7 +2763,7 @@ bool GetLowLevelILForPPCInstruction(Architecture *arch, LowLevelILFunction &il,
             // 2. Load SRR1 (SPR 27)
             ei1 = il.Load(4, operToIL(il, oper0, OTI_IMM_BIAS, 4));
             il.AddInstruction(il.Intrinsic( {}, PPC_INTRIN_MTSPR, {il.Const(4, 27), ei1} ));
-            
+
             break;
 
 		case PPC_ID_VLE_E_STMVMCSRRW:
