@@ -2739,14 +2739,16 @@ bool GetLowLevelILForPPCInstruction(Architecture *arch, LowLevelILFunction &il,
             REQUIRE1OP
 
             // 1. Store SRR0 (SPR 26) at EA
+            ei1 = il.Intrinsic({RegisterOrFlag::Register(LLIL_TEMP(0))}, PPC_INTRIN_MFSPR, {il.Const(4, 26)});
+            il.AddInstruction(ei1);
             ei0 = operToIL(il, oper0, OTI_IMM_BIAS, 0);
-            ei1 = il.Intrinsic( {}, PPC_INTRIN_MFSPR, {il.Const(4, 26)} );
-            il.AddInstruction(il.Store(4, ei0, ei1));
+            il.AddInstruction(il.Store(4, ei0, il.Register(4, LLIL_TEMP(0))));
 
             // 2. Store SRR1 (SPR 27) at EA + 4
+            ei1 = il.Intrinsic({RegisterOrFlag::Register(LLIL_TEMP(1))}, PPC_INTRIN_MFSPR, {il.Const(4, 27)});
+            il.AddInstruction(ei1);
             ei0 = operToIL(il, oper0, OTI_IMM_BIAS, 4);
-            ei1 = il.Intrinsic( {}, PPC_INTRIN_MFSPR, {il.Const(4, 27)} );
-            il.AddInstruction(il.Store(4, ei0, ei1));
+            il.AddInstruction(il.Store(4, ei0, il.Register(4, LLIL_TEMP(1))));
 
             break;
         }
@@ -2773,14 +2775,16 @@ bool GetLowLevelILForPPCInstruction(Architecture *arch, LowLevelILFunction &il,
             REQUIRE1OP
 
             // 1. Store MCSRR0 (SPR 570) at EA
+            ei1 = il.Intrinsic({RegisterOrFlag::Register(LLIL_TEMP(0))}, PPC_INTRIN_MFSPR, {il.Const(4, 570)});
+            il.AddInstruction(ei1);
             ei0 = operToIL(il, oper0, OTI_IMM_BIAS, 0);
-            ei1 = il.Intrinsic( {}, PPC_INTRIN_MFSPR, {il.Const(4, 570)} );
-            il.AddInstruction(il.Store(4, ei0, ei1));
+            il.AddInstruction(il.Store(4, ei0, il.Register(4, LLIL_TEMP(0))));
 
             // 2. Store MCSRR1 (SPR 571) at EA + 4
+            ei1 = il.Intrinsic({RegisterOrFlag::Register(LLIL_TEMP(1))}, PPC_INTRIN_MFSPR, {il.Const(4, 571)});
+            il.AddInstruction(ei1);
             ei0 = operToIL(il, oper0, OTI_IMM_BIAS, 4);
-            ei1 = il.Intrinsic( {}, PPC_INTRIN_MFSPR, {il.Const(4, 571)} );
-            il.AddInstruction(il.Store(4, ei0, ei1));
+            il.AddInstruction(il.Store(4, ei0, il.Register(4, LLIL_TEMP(1))));
 
             break;
         }
