@@ -1760,6 +1760,7 @@ const char* GetMnemonic(const Instruction* instruction)
 		case PPC_ID_SPE_EFSCTUI: return "efsctui";
 		case PPC_ID_SPE_EFSCTUIZ: return "efsctuiz";
 		case PPC_ID_SPE_EFSDIV: return "efsdiv";
+		case PPC_ID_SPE_EFSMADD: return "efsmadd";
 		case PPC_ID_SPE_EFSMUL: return "efsmul";
 		case PPC_ID_SPE_EFSNABS: return "efsnabs";
 		case PPC_ID_SPE_EFSNEG: return "efsneg";
