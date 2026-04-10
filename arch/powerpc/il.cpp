@@ -1046,42 +1046,14 @@ bool GetLowLevelILForPPCInstruction(Architecture *arch, LowLevelILFunction &il,
 
 			REQUIRE2OPS
 
-			/* Big-Endian stack parameter adjustment for halfword loads:
-			   Same principle as byte loads – when a halfword is loaded
-			   from a non-word-aligned stack offset, rewrite as word load
-			   + extraction.  Only offset & 3 == 2 is valid (halfword-
-			   aligned within a word). */
-			if (arch->GetEndianness() == BigEndian
-				&& oper1->cls == PPC_OP_MEM_RA
-				&& oper1->mem.reg == PPC_REG_GPR1
-				&& oper1->mem.offset > 0
-				&& (oper1->mem.offset & 3) == 2)
-			{
-				int32_t aligned = oper1->mem.offset & ~3;
-
-				ei0 = il.Add(addressSize_l,
-					il.Register(addressSize_l, PPC_REG_GPR1),
-					il.Const(addressSize_l, aligned));
-				ei0 = il.Load(4, ei0);
-				ei0 = il.LowPart(2, ei0); // lower halfword in BE
-				if (isSignExtend)
-					ei0 = il.SignExtend(addressSize_l, ei0);
-				else
-					ei0 = il.ZeroExtend(addressSize_l, ei0);
-				ei0 = il.SetRegister(addressSize_l, oper0->reg, ei0);
-				il.AddInstruction(ei0);
-			}
+			ei0 = operToIL(il, oper1, options, PPC_IL_EXTRA_DEFAULT, addressSize_l); // d(rA) or 0
+			ei0 = il.Load(2, ei0);                    // [d(rA)]
+			if (!isSignExtend)
+				ei0 = il.ZeroExtend(addressSize_l, ei0);
 			else
-			{
-				ei0 = operToIL(il, oper1, options, PPC_IL_EXTRA_DEFAULT, addressSize_l); // d(rA) or 0
-				ei0 = il.Load(2, ei0);                    // [d(rA)]
-				if (!isSignExtend)
-					ei0 = il.ZeroExtend(addressSize_l, ei0);
-				else
-					ei0 = il.SignExtend(addressSize_l, ei0);
-				ei0 = il.SetRegister(addressSize_l, oper0->reg, ei0); // rD = [d(rA)]
-				il.AddInstruction(ei0);
-			}
+				ei0 = il.SignExtend(addressSize_l, ei0);
+			ei0 = il.SetRegister(addressSize_l, oper0->reg, ei0); // rD = [d(rA)]
+			il.AddInstruction(ei0);
 
 			// if update, rA is set to effective address (d(rA))
 			if (instruction->id == PPC_ID_LHZU || instruction->id == PPC_ID_LHAU)
