@@ -665,6 +665,17 @@ bool GetLowLevelILForPPCInstruction(Architecture *arch, LowLevelILFunction &il,
 				instruction->flags.rc ? IL_FLAGWRITE_CR0_S : 0
 			);
 			il.AddInstruction(ei0);
+			if (instruction->flags.rc)
+			{
+				// flag:lt (NegativeSignFlagRole) and flag:eq (ZeroFlagRole) are auto-synthesized.
+				// flag:gt (SpecialFlagRole) must be explicit: CR0[GT] = result s> 0
+				il.AddInstruction(il.SetFlag(IL_FLAG_GT,
+					il.CompareSignedGreaterThan(addressSize_l,
+						il.Register(addressSize_l, oper0->reg),
+						il.Const(addressSize_l, 0)
+					)
+				));
+			}
 			break;
 
 		case PPC_ID_CMPW: /* compare (signed) word(32-bit) */
