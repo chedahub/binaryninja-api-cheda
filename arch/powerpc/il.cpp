@@ -918,19 +918,23 @@ bool GetLowLevelILForPPCInstruction(Architecture *arch, LowLevelILFunction &il,
 					break;
 				}
 
-				ei1 = il.Register(4, oper1->reg);
-				ei2 = il.Register(4, oper2->reg);
+				// oper1 is either PPC_OP_REG_RA (register) or PPC_OP_UIMM=0 (when
+				// the RA field in the encoding is 0, meaning a=0, NOT r0).
+				// Use operToIL so the RA==0 case correctly emits Const(0) rather
+				// than Register(r0).
+				ei1 = operToIL(il, oper1, PPC_IL_OPTIONS_DEFAULT, PPC_IL_EXTRA_DEFAULT, addressSize_l);
+				ei2 = il.Register(addressSize_l, oper2->reg);
 				il.AddInstruction(il.If(ei0, trueLabel, falseLabel));
 
-				/* true case */
+				/* true case: RT = a  (RA or 0) */
 				il.MarkLabel(trueLabel);
-				ei0 = il.SetRegister(4, oper0->reg, ei1);
+				ei0 = il.SetRegister(addressSize_l, oper0->reg, ei1);
 				il.AddInstruction(ei0);
 				il.AddInstruction(il.Goto(doneLabel));
 
-				/* false case */
+				/* false case: RT = RB */
 				il.MarkLabel(falseLabel);
-				ei0 = il.SetRegister(4, oper0->reg, ei2);
+				ei0 = il.SetRegister(addressSize_l, oper0->reg, ei2);
 				il.AddInstruction(ei0);
 				il.AddInstruction(il.Goto(doneLabel));
 
