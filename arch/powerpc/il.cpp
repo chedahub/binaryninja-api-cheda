@@ -969,45 +969,11 @@ bool GetLowLevelILForPPCInstruction(Architecture *arch, LowLevelILFunction &il,
 
 			REQUIRE2OPS
 
-			/* Big-Endian stack parameter adjustment:
-			   When loading a byte from a non-word-aligned stack offset
-			   (e.g. lbz rD, 59(r1)), rewrite as a word-aligned load with
-			   byte extraction so that Binary Ninja recognises the access
-			   as belonging to the same parameter slot the caller wrote
-			   with stw.
-
-			   BE word layout at aligned offset 56:
-			     [56]=byte0(MSB)  [57]=byte1  [58]=byte2  [59]=byte3(LSB)
-			   byte_pos = 59 & 3 = 3  →  shift = (3-3)*8 = 0  →  LSB  */
-			if (arch->GetEndianness() == BigEndian
-				&& oper1->cls == PPC_OP_MEM_RA
-				&& oper1->mem.reg == PPC_REG_GPR1
-				&& oper1->mem.offset > 0
-				&& (oper1->mem.offset & 3) != 0)
-			{
-				int32_t aligned = oper1->mem.offset & ~3;
-				int32_t byte_pos = oper1->mem.offset & 3; // 0=MSB, 3=LSB in BE
-				int32_t shift = (3 - byte_pos) * 8;
-
-				ei0 = il.Add(addressSize_l,
-					il.Register(addressSize_l, PPC_REG_GPR1),
-					il.Const(addressSize_l, aligned));
-				ei0 = il.Load(4, ei0);
-				if (shift > 0)
-					ei0 = il.LogicalShiftRight(4, ei0, il.Const(4, shift));
-				ei0 = il.LowPart(1, ei0);
-				ei0 = il.ZeroExtend(addressSize_l, ei0);
-				ei0 = il.SetRegister(addressSize_l, oper0->reg, ei0);
-				il.AddInstruction(ei0);
-			}
-			else
-			{
-				ei0 = operToIL(il, oper1, options, PPC_IL_EXTRA_DEFAULT, addressSize_l); // d(rA) or 0
-				ei0 = il.Load(1, ei0);                    // [d(rA)]
-				ei0 = il.ZeroExtend(addressSize_l, ei0);
-				ei0 = il.SetRegister(addressSize_l, oper0->reg, ei0); // rD = [d(rA)]
-				il.AddInstruction(ei0);
-			}
+			ei0 = operToIL(il, oper1, options, PPC_IL_EXTRA_DEFAULT, addressSize_l); // d(rA) or 0
+			ei0 = il.Load(1, ei0);                    // [d(rA)]
+			ei0 = il.ZeroExtend(addressSize_l, ei0);
+			ei0 = il.SetRegister(addressSize_l, oper0->reg, ei0); // rD = [d(rA)]
+			il.AddInstruction(ei0);
 
 			// if update, rA is set to effective address (d(rA))
 			if(instruction->id == PPC_ID_LBZU) {
