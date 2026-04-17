@@ -1955,10 +1955,17 @@ bool GetLowLevelILForPPCInstruction(Architecture *arch, LowLevelILFunction &il,
 
 		case PPC_ID_MULLI:
 			REQUIRE3OPS
-			ei0 = il.Register(4, oper1->reg);
-			ei0 = il.MultDoublePrecUnsigned(4, ei0, il.Const(4, oper2->uimm));
-			ei0 = il.LowPart(4, ei0);
-			il.AddInstruction(il.SetRegister(4, oper0->reg, ei0));
+			// mulli: RT = (RA × EXTS(SI)) lower 32 bits only.
+			// Use plain Mult (32×32→32) — avoids the 64-bit mulu.dp.d
+			// intermediate that leaks into HLIL type inference and causes
+			// pointer-arithmetic type mismatches / Pseudo-C crashes.
+			// Lower bits of signed×signed == lower bits of unsigned×unsigned,
+			// so signedness does not affect correctness here.
+			ei0 = il.Mult(addressSize_l,
+				il.Register(addressSize_l, oper1->reg),
+				il.Const(addressSize_l, (int32_t)oper2->simm)
+			);
+			il.AddInstruction(il.SetRegister(addressSize_l, oper0->reg, ei0));
 			break;
 
 		case PPC_ID_MULHWx:
