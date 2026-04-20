@@ -209,11 +209,11 @@ InstructionId VleTranslateMnemonic(InstructionId id)
 		//case PPC_ID_VLE_SE_RFI: return PPC_ID_RFI;
 		case PPC_ID_VLE_SE_RFMCI: return PPC_ID_RFMCI;
 		case PPC_ID_VLE_SE_SC: return PPC_ID_SC;
-		//case PPC_ID_VLE_SE_SLW: return PPC_ID_SLWx;
+		//case PPC_ID_VLE_SE_SLW:  return PPC_ID_SLWx;  // handled directly in il.cpp
 		case PPC_ID_VLE_SE_SLWI: return PPC_ID_SLWIx;
-		case PPC_ID_VLE_SE_SRAW: return PPC_ID_SRAWx;
+		//case PPC_ID_VLE_SE_SRAW: return PPC_ID_SRAWx; // handled directly in il.cpp
 		case PPC_ID_VLE_SE_SRAWI: return PPC_ID_SRAWIx;
-		case PPC_ID_VLE_SE_SRW: return PPC_ID_SRWx;
+		//case PPC_ID_VLE_SE_SRW:  return PPC_ID_SRWx;  // handled directly in il.cpp
 		case PPC_ID_VLE_SE_SRWI: return PPC_ID_SRWIx;
 		case PPC_ID_VLE_SE_SUB: return PPC_ID_SUBFx;
 		case PPC_ID_VLE_SE_SUBF: return PPC_ID_SUBFx;

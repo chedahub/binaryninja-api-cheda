@@ -1755,7 +1755,27 @@ bool GetLowLevelILForPPCInstruction(Architecture *arch, LowLevelILFunction &il,
 			REQUIRE2OPS
 			ei0 = il.And(4, il.Register(4, oper1->reg), il.Const(4, 0x3f));
 			ei1 = il.ShiftLeft(4, il.Register(4, oper0->reg), ei0);
-			
+			il.AddInstruction(il.SetRegister(4, oper0->reg, ei1));
+			break;
+
+		case PPC_ID_VLE_SE_SRW:
+			// se_srw rX, rY  =>  rX = rX >> (rY & 0x3f)  (logical)
+			// Handled directly rather than via PPC_ID_SRWx translation because
+			// se_srw has only 2 operands (rX=value/dest, rY=shift_amount) while
+			// the standard srw form is 3-operand (rA=dest, rS=value, rB=shift),
+			// which would cause oper1/oper2 to be read in the wrong order.
+			REQUIRE2OPS
+			ei0 = il.And(4, il.Register(4, oper1->reg), il.Const(4, 0x3f));
+			ei1 = il.LogicalShiftRight(4, il.Register(4, oper0->reg), ei0);
+			il.AddInstruction(il.SetRegister(4, oper0->reg, ei1));
+			break;
+
+		case PPC_ID_VLE_SE_SRAW:
+			// se_sraw rX, rY  =>  rX = rX >>a (rY & 0x1f)  (arithmetic, sets XER.CA)
+			// Same operand-reversal issue as se_srw — handled directly.
+			REQUIRE2OPS
+			ei0 = il.And(4, il.Register(4, oper1->reg), il.Const(4, 0x1f));
+			ei1 = il.ArithShiftRight(4, il.Register(4, oper0->reg), ei0, IL_FLAGWRITE_XER_CA);
 			il.AddInstruction(il.SetRegister(4, oper0->reg, ei1));
 			break;
 
