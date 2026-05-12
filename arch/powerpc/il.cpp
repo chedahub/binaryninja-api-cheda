@@ -601,7 +601,22 @@ bool GetLowLevelILForPPCInstruction(Architecture *arch, LowLevelILFunction &il,
 		case PPC_ID_ADDIS: /* add immediate, shifted */
 			REQUIRE3OPS
 			if (instruction->id == PPC_ID_ADDIS)
-				ei0 = il.Const(addressSize_l, oper2->simm << 16);
+			{
+				// Emit ShiftLeft(simm, 16) rather than pre-computing (simm << 16)
+				// into a single Const node.  Pre-computing produces a large constant
+				// (e.g. 0x40010000) that Binary Ninja's LLIL constant resolver may
+				// annotate with a symbol name when the value falls within a mapped
+				// region — incorrectly treating pure integer arithmetic (e_add2is /
+				// addis) as a pointer reference.  Keeping the unshifted immediate
+				// (e.g. 0x4001) in the LLIL avoids the false symbol binding.
+				// Compare: PPC_ID_LIS uses ConstPointer deliberately for the true
+				// pointer-load case (lis / addis rD, 0, SI).
+				ei0 = il.ShiftLeft(
+					addressSize_l,
+					il.Const(addressSize_l, (int32_t)oper2->simm),
+					il.Const(1, 16)
+				);
+			}
 			else
 				ei0 = il.Const(addressSize_l, oper2->simm);
 			ei0 = il.Add(
